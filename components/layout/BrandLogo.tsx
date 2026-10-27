@@ -34,7 +34,7 @@ export default function BrandLogo({
     >
       <BrandMark />
       {showWordmark && (
-        <span className="text-[15px] font-semibold tracking-[-0.02em] text-ink">Signalist</span>
+        <span className="text-base font-semibold tracking-[-0.02em] text-ink">Signalist</span>
       )}
     </Link>
   );

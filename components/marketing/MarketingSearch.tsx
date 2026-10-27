@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { motion, useReducedMotion } from 'framer-motion';
 import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -11,8 +10,6 @@ import { cn } from '@/lib/utils';
  * Marketing search — adapted from P0 Command palette prompt.
  * Public: search → sign-in with callback to stock/dashboard.
  */
-
-const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 
 const POPULAR = [
   { symbol: 'AAPL', name: 'Apple Inc.' },
@@ -33,7 +30,6 @@ export function MarketingSearch({ className }: { className?: string }) {
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
   const [mounted, setMounted] = useState(false);
-  const reduce = useReducedMotion();
   const inputRef = useRef<HTMLInputElement>(null);
   const uid = useId();
 
@@ -124,7 +120,7 @@ export function MarketingSearch({ className }: { className?: string }) {
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          'press flex h-9 items-center gap-2 rounded-lg px-2.5 text-[14px] text-ink-2 hover:bg-surface-2 hover:text-ink',
+          'press flex h-11 items-center gap-2 rounded-lg px-3 text-sm text-ink-2 hover:bg-surface-2 hover:text-ink',
           className
         )}
       >
@@ -141,27 +137,17 @@ export function MarketingSearch({ className }: { className?: string }) {
               open ? 'pointer-events-auto' : 'pointer-events-none'
             )}
           >
-            <motion.div
-              initial={false}
-              animate={{ opacity: open ? 1 : 0 }}
-              transition={{ duration: open ? 0.18 : 0.12, ease: EASE_OUT }}
+            <div
               onClick={() => setOpen(false)}
-              className="absolute inset-0 bg-black/65"
+              className={cn('absolute inset-0 bg-ink/40', open ? 'opacity-100' : 'opacity-0')}
             />
-            <div className="pointer-events-none absolute inset-0 flex items-start justify-center p-4 pt-[18vh]">
-              <motion.div
+            <div className="pointer-events-none absolute inset-0 flex items-start justify-center p-4 pt-[12vh]">
+              <div
                 role="dialog"
                 aria-modal
                 aria-labelledby={uid}
-                initial={false}
-                animate={{
-                  opacity: open ? 1 : 0,
-                  y: open || reduce ? 0 : -8,
-                  scale: open || reduce ? 1 : 0.97,
-                }}
-                transition={{ type: 'spring', stiffness: 560, damping: 40, mass: 0.5 }}
                 className={cn(
-                  'pointer-events-auto w-full max-w-lg overflow-hidden rounded-lg border border-line-strong bg-surface shadow-[0_24px_80px_rgba(0,0,0,0.55)]',
+                  'pointer-events-auto w-full max-w-lg overflow-hidden rounded-lg border border-line-strong bg-surface shadow-none',
                   !open && 'invisible'
                 )}
               >
@@ -177,12 +163,12 @@ export function MarketingSearch({ className }: { className?: string }) {
                     }}
                     onKeyDown={onKeyDown}
                     placeholder="Search symbols or jump…"
-                    className="h-12 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-3"
+                    className="h-12 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-ink-3"
                   />
                   <button
                     type="button"
                     onClick={() => setOpen(false)}
-                    className="rounded border border-line-strong px-1.5 py-0.5 text-[12px] text-ink-3 hover:text-ink-2"
+                    className="press h-11 rounded-lg px-3 text-sm text-ink-3 hover:text-ink"
                   >
                     Close
                   </button>
@@ -199,10 +185,10 @@ export function MarketingSearch({ className }: { className?: string }) {
                         onMouseEnter={() => setActive(i)}
                         onClick={() => go(item.href)}
                         className={cn(
-                          'flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition',
+                          'flex h-11 w-full items-center justify-between rounded-lg px-3 text-left text-sm',
                           i === active
                             ? 'bg-surface-2 text-ink'
-                            : 'text-ink-2 hover:bg-surface-2/60'
+                            : 'text-ink-2 hover:bg-surface-2'
                         )}
                       >
                         <span>{item.label}</span>
@@ -211,7 +197,7 @@ export function MarketingSearch({ className }: { className?: string }) {
                     ))
                   )}
                 </div>
-              </motion.div>
+              </div>
             </div>
           </div>,
           document.body

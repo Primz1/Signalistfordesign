@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Sparkles } from 'lucide-react';
 import { getCachedSession } from '@/lib/auth/session';
 import { getPortfolio } from '@/lib/actions/portfolio.actions';
 import { listWatchlist } from '@/lib/actions/watchlist.actions';
@@ -137,10 +136,10 @@ export default async function Home() {
             <h1 id="account-heading" className="mt-5 label-sm">
               Paper portfolio value
             </h1>
-            <div className="figure mt-1 text-[44px] leading-none text-ink md:text-[56px]">
+            <div className="figure mt-1 text-[32px] text-ink md:text-[48px]">
               {formatPrice(totalValue)}
             </div>
-            <div className="mono mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[14px]">
+            <div className="num mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm">
               <span className={dayPl > 0 ? 'text-up' : dayPl < 0 ? 'text-down' : 'text-ink-2'}>
                 {signed(dayPl)} ({signedPct(dayPlPercent)}) today
               </span>
@@ -157,7 +156,7 @@ export default async function Home() {
               ].map((s) => (
                 <div key={s.k} className="bg-canvas px-4 py-3">
                   <dt className="label-sm">{s.k}</dt>
-                  <dd className="mono mt-1 truncate text-[15px] text-ink">{s.v}</dd>
+                  <dd className="num mt-1 truncate text-base text-ink">{s.v}</dd>
                 </div>
               ))}
             </dl>
@@ -183,14 +182,14 @@ export default async function Home() {
           <div className="surface-card flex min-h-[280px] flex-col">
             <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
               <div className="flex min-w-0 items-baseline gap-2">
-                <span className="mono text-[14px] font-medium text-ink">{heroSym}</span>
-                <span className="truncate text-[13px] text-ink-3">
+                <span className="num text-sm font-semibold text-ink">{heroSym}</span>
+                <span className="truncate text-sm text-ink-3">
                   {heroHolding ? 'Largest position' : 'From your watchlist'} · 1 month
                 </span>
               </div>
               <Link
                 href={`/stocks/${heroSym}`}
-                className="flex-none text-[13px] font-medium text-signal hover:underline"
+                className="flex-none text-sm font-semibold text-ink hover:underline"
               >
                 Open chart
               </Link>
@@ -210,19 +209,19 @@ export default async function Home() {
           <div className="min-w-0">
             <div className="mb-3 flex items-baseline justify-between">
               <h2 className="section-title">Your watchlist</h2>
-              <Link href="/watchlist" className="text-[13px] text-ink-2 hover:text-ink">
+              <Link href="/watchlist" className="text-sm text-ink-2 hover:text-ink">
                 Open watchlist
               </Link>
             </div>
-            <div className="surface-card overflow-x-auto">
-              <table className="w-full min-w-[480px] text-[14px]">
+            <div className="surface-card">
+              <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-line text-left">
                     {['Symbol', 'Price', 'Today', 'AI score'].map((h) => (
                       <th
                         key={h}
                         scope="col"
-                        className={`px-4 py-2.5 text-[12px] font-medium text-ink-3 ${h !== 'Symbol' ? 'text-right' : ''}`}
+                        className={`px-4 py-3 text-xs font-semibold tracking-[0.04em] text-ink-3 uppercase ${h !== 'Symbol' ? 'text-right' : ''}`}
                       >
                         {h}
                       </th>
@@ -233,8 +232,8 @@ export default async function Home() {
                   {watchlist.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="px-4 py-8">
-                        <p className="text-[14px] text-ink">No symbols yet.</p>
-                        <p className="mt-1 text-[13px] text-ink-3">
+                        <p className="text-sm text-ink">No symbols yet.</p>
+                        <p className="mt-1 text-sm text-ink-3">
                           Add a ticker with Add symbol and its price, move and AI score show up
                           here.
                         </p>
@@ -248,15 +247,15 @@ export default async function Home() {
                       return (
                         <tr key={sym} className="border-b border-line last:border-0 hover:bg-surface-2">
                           <td className="px-4 py-3">
-                            <Link href={`/stocks/${sym}`} className="flex min-w-0 items-baseline gap-2.5">
-                              <span className="mono font-medium text-ink">{sym}</span>
-                              <span className="truncate text-[13px] text-ink-3">{row.company}</span>
+                            <Link href={`/stocks/${sym}`} className="flex min-w-0 items-baseline gap-2">
+                              <span className="num shrink-0 font-semibold text-ink">{sym}</span>
+                              <span className="min-w-0 truncate text-sm text-ink-3" title={row.company}>{row.company}</span>
                             </Link>
                           </td>
-                          <td className="mono px-4 py-3 text-right text-ink">
+                          <td className="num px-4 py-3 text-right text-ink">
                             {q?.price != null ? formatPrice(q.price) : '—'}
                           </td>
-                          <td className={`mono px-4 py-3 text-right ${ch >= 0 ? 'text-up' : 'text-down'}`}>
+                          <td className={`num px-4 py-3 text-right ${q?.change == null ? 'text-ink-3' : ch >= 0 ? 'text-up' : 'text-down'}`}>
                             {q?.change != null ? signedPct(ch) : '—'}
                           </td>
                           <td className="px-4 py-3 text-right">
@@ -274,18 +273,15 @@ export default async function Home() {
           <div className="min-w-0">
             <div className="mb-3 flex items-baseline justify-between">
               <h2 className="section-title">Latest research</h2>
-              <Link href="/research" className="text-[13px] text-ink-2 hover:text-ink">
+              <Link href="/research" className="text-sm text-ink-2 hover:text-ink">
                 New report
               </Link>
             </div>
             <div className="surface-card divide-y divide-line">
               {typedReports.length === 0 ? (
-                <Link href="/research" className="block px-4 py-5 hover:bg-surface-2">
-                  <div className="flex items-center gap-2 text-[14px] text-ink">
-                    <Sparkles className="size-4 text-signal" strokeWidth={1.5} />
-                    No reports yet
-                  </div>
-                  <p className="mt-1 text-[13px] leading-5 text-ink-3">
+                <Link href="/research" className="block px-4 py-4 hover:bg-surface-2">
+                  <div className="text-sm font-semibold text-ink">No reports yet</div>
+                  <p className="mt-1 text-sm leading-normal text-ink-3">
                     Pick a symbol: Signalist computes the factors first, then writes a narrative
                     that only cites those numbers.
                   </p>
@@ -300,13 +296,13 @@ export default async function Home() {
                     <Link
                       key={key}
                       href={`/research?symbol=${r.symbol}`}
-                      className="block px-4 py-3.5 hover:bg-surface-2"
+                      className="block px-4 py-3 hover:bg-surface-2"
                     >
                       <div className="flex items-center justify-between gap-3">
-                        <span className="mono text-[13px] font-medium text-ink">{r.symbol}</span>
-                        <span className="mono text-[12px] text-ink-3">{conf}% confidence</span>
+                        <span className="num text-sm font-semibold text-ink">{r.symbol}</span>
+                        <span className="num text-xs text-ink-3">{conf}% confidence</span>
                       </div>
-                      <p className="mt-1 line-clamp-2 text-[13px] leading-5 text-ink-2">
+                      <p className="mt-1 line-clamp-2 text-sm leading-normal text-ink-2">
                         {r.query || r.summary || 'Research report'}
                       </p>
                     </Link>
@@ -327,7 +323,7 @@ export default async function Home() {
             <h2 id="markets-heading" className="section-title">
               Markets
             </h2>
-            <span className="text-[13px] text-ink-3">Delayed data via TradingView</span>
+            <span className="text-sm text-ink-3">Delayed data via TradingView</span>
           </div>
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
             <div className="surface-card min-h-[420px] p-2 xl:col-span-1">
@@ -374,14 +370,7 @@ function signedPct(n: number) {
 }
 
 function ScoreCell({ score }: { score?: number }) {
-  if (score == null) return <span className="mono text-ink-3">—</span>;
+  if (score == null) return <span className="num text-ink-3">—</span>;
   const tone = score >= 65 ? 'text-up' : score >= 45 ? 'text-ink' : 'text-down';
-  return (
-    <span className="inline-flex items-center justify-end gap-2">
-      <span className="hidden h-1 w-12 overflow-hidden rounded-full bg-surface-3 sm:block" aria-hidden>
-        <span className="block h-full rounded-full bg-signal" style={{ width: `${score}%` }} />
-      </span>
-      <span className={`mono ${tone}`}>{Math.round(score)}</span>
-    </span>
-  );
+  return <span className={`num ${tone}`}>{Math.round(score)}</span>;
 }

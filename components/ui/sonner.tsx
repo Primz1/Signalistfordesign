@@ -12,12 +12,14 @@ import {
   TriangleAlert,
   X,
 } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { Toaster as Sonner, type ToasterProps } from 'sonner';
 
 const Toaster = ({ ...props }: ToasterProps) => {
+  const { resolvedTheme } = useTheme();
   return (
     <Sonner
-      theme="dark"
+      theme={resolvedTheme === 'light' ? 'light' : 'dark'}
       className="toaster group"
       position="bottom-right"
       gap={16}
@@ -28,9 +30,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
         duration: 4000,
         classNames: {
           toast:
-            'group toast !flex !items-start !gap-3 !min-w-[320px] !rounded-lg !border !border-line-strong !bg-surface !p-4 !text-ink !shadow-[0_12px_32px_rgba(0,0,0,0.5)]',
-          title: '!text-[13px] !font-semibold !text-ink',
-          description: '!mt-0.5 !text-[12px] !text-ink-2 !opacity-90',
+            'group toast !flex !items-start !gap-3 !w-[min(22rem,calc(100vw-2rem))] !min-w-0 !rounded-lg !border !border-line-strong !bg-surface !p-4 !text-ink !shadow-none',
+          title: '!text-sm !font-semibold !text-ink',
+          description: '!mt-1 !text-xs !text-ink-2 !opacity-100',
           actionButton:
             '!bg-signal !text-signal-ink !text-xs !font-semibold',
           cancelButton: '!bg-surface-2 !text-ink-2 !text-xs',

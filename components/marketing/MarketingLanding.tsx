@@ -46,30 +46,32 @@ function useRevealOnScroll() {
 
 function Header() {
   return (
-    <header className="mx-auto flex h-16 w-full max-w-[1320px] items-center gap-8 px-4 md:px-8">
+    <header className="app-bar sticky top-0 z-30 border-b border-line">
+      <div className="mx-auto flex h-16 w-full max-w-[1120px] items-center gap-4 px-4 md:gap-8 md:px-8">
       <BrandLogo href="/" />
       <nav aria-label="Sections" className="hidden items-center gap-1 lg:flex">
         {NAV.map((l) => (
           <a
             key={l.href}
             href={l.href}
-            className="rounded-md px-3 py-1.5 text-[14px] text-ink-2 transition-colors duration-150 hover:bg-surface-2 hover:text-ink"
+            className="inline-flex h-11 items-center rounded-lg px-3 text-sm text-ink-2 hover:bg-surface-2 hover:text-ink"
           >
             {l.label}
           </a>
         ))}
       </nav>
-      <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+      <div className="ml-auto flex items-center gap-2">
         <MarketingSearch className="hidden sm:flex" />
         <Link
           href="/sign-in"
-          className="press rounded-lg px-3 py-2 text-[14px] text-ink-2 hover:bg-surface-2 hover:text-ink"
+          className="press inline-flex h-11 items-center rounded-lg px-3 text-sm text-ink-2 hover:bg-surface-2 hover:text-ink"
         >
           Sign in
         </Link>
-        <Link href="/sign-up" className="yellow-btn h-9 px-4 text-[14px]">
+        <Link href="/sign-up" className="yellow-btn px-4 text-sm">
           Create account
         </Link>
+      </div>
       </div>
     </header>
   );
@@ -77,32 +79,32 @@ function Header() {
 
 function Hero({ data }: { data: MarketingLiveData }) {
   return (
-    <section className="mx-auto w-full max-w-[1320px] px-4 pb-28 pt-14 md:px-8 md:pb-40 md:pt-24">
-      <h1 className="animate-el max-w-[14ch] text-[clamp(2.5rem,8.4vw,7.75rem)] font-semibold leading-[0.92] tracking-[-0.045em] text-ink">
+    <section className="mx-auto w-full max-w-[1120px] px-4 pt-12 pb-16 md:px-8 md:pt-16 md:pb-24">
+      <h1 className="font-display animate-el max-w-[16ch] text-[32px] leading-[1.1] font-semibold tracking-[-0.03em] text-ink md:text-[48px] md:leading-[1.05] md:tracking-[-0.04em]">
         Trade the signal, not the noise.
       </h1>
       <div
-        className="animate-el mt-8 flex flex-col gap-8 md:mt-10 md:flex-row md:items-end md:justify-between"
+        className="animate-el mt-6 flex flex-col gap-6 md:mt-8 md:flex-row md:items-end md:justify-between"
         style={{ animationDelay: '70ms' }}
       >
-        <p className="max-w-[46ch] text-[18px] leading-[1.55] text-ink-2 md:text-[20px]">
+        <p className="max-w-[46ch] text-base leading-normal text-ink-2 md:text-xl md:leading-normal">
           Signalist watches the price levels you set on stocks and crypto, tells you the moment one
           is crossed, and backs every AI note with the numbers behind it.
         </p>
         <div className="flex flex-none items-center gap-3">
-          <Link href="/sign-up" className="yellow-btn h-12 px-6 text-[15px]">
+          <Link href="/sign-up" className="yellow-btn px-6">
             Create free account <ArrowRight className="size-4" />
           </Link>
           <Link
             href="/sign-in"
-            className="press rounded-lg px-4 py-3 text-[15px] text-ink-2 hover:bg-surface-2 hover:text-ink"
+            className="press inline-flex h-11 items-center rounded-lg px-4 text-base text-ink-2 hover:bg-surface-2 hover:text-ink"
           >
             Sign in
           </Link>
         </div>
       </div>
 
-      <div className="animate-el mt-20 md:mt-28" style={{ animationDelay: '140ms' }}>
+      <div className="animate-el mt-12 md:mt-16" style={{ animationDelay: '80ms' }}>
         {data.heroCandles.length > 20 ? (
           <AlertLevelChart symbol={data.hero.symbol} candles={data.heroCandles} />
         ) : (
@@ -125,14 +127,14 @@ function QuoteBoard({ quotes, columns = 1 }: { quotes: MarketingQuote[]; columns
           key={q.symbol}
           data-reveal
           style={{ '--i': i } as React.CSSProperties}
-          className="flex items-baseline gap-4 py-4 odd:bg-canvas/40 sm:px-4"
+          className="flex min-w-0 items-baseline gap-4 border-b border-line py-3"
         >
-          <span className="mono w-16 flex-none text-[20px] font-medium text-ink md:w-20 md:text-[26px]">
+          <span className="num w-16 flex-none text-xl font-semibold text-ink md:w-20 md:text-2xl">
             {q.symbol}
           </span>
-          <span className="hidden min-w-0 flex-1 truncate text-[15px] text-ink-3 sm:block">{q.name}</span>
-          <span className="mono ml-auto text-[20px] text-ink md:text-[26px]">{q.price}</span>
-          <span className={cn('mono w-20 flex-none text-right text-[15px]', q.up ? 'text-up' : 'text-down')}>
+          <span className="hidden min-w-0 flex-1 truncate text-sm text-ink-3 sm:block" title={q.name}>{q.name}</span>
+          <span className="num ml-auto text-xl text-ink md:text-2xl">{q.price}</span>
+          <span className={cn('num w-20 flex-none text-right text-sm', q.up ? 'text-up' : 'text-down')}>
             {pct(q.changePct)}
           </span>
         </li>
@@ -144,12 +146,12 @@ function QuoteBoard({ quotes, columns = 1 }: { quotes: MarketingQuote[]; columns
 function Markets({ data }: { data: MarketingLiveData }) {
   return (
     <section className="bg-surface">
-      <div className="mx-auto grid w-full max-w-[1320px] gap-12 px-4 py-24 md:px-8 md:py-32 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:gap-20">
+      <div className="mx-auto grid w-full max-w-[1120px] gap-12 px-4 py-16 md:px-8 md:py-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:gap-16">
         <div data-reveal>
-          <h2 className="max-w-[13ch] text-[clamp(2rem,4vw,3.5rem)] font-semibold leading-[1.02] tracking-[-0.035em] text-ink">
+          <h2 className="font-display max-w-[14ch] text-[32px] leading-[1.1] font-semibold tracking-[-0.03em] text-ink md:text-[48px] md:tracking-[-0.04em]">
             Live quotes, not screenshots.
           </h2>
-          <p className="mt-5 max-w-[36ch] text-[17px] leading-[1.55] text-ink-2">
+          <p className="mt-4 max-w-[36ch] text-base leading-normal text-ink-2">
             These came from Finnhub and Binance when this page loaded. Equities and crypto sit in
             the same list, priced the same way.
           </p>
@@ -172,20 +174,20 @@ function Alerts({ data }: { data: MarketingLiveData }) {
     ['Now', `${data.hero.price}  (${away.toFixed(1)}% below)`],
   ];
   return (
-    <section id="alerts" className="mx-auto w-full max-w-[1320px] scroll-mt-8 px-4 py-28 md:px-8 md:py-44">
+    <section id="alerts" className="mx-auto w-full max-w-[1120px] scroll-mt-8 px-4 py-16 md:px-8 md:py-24">
       <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-24">
         <div data-reveal>
-          <h2 className="text-[clamp(2rem,4.4vw,4rem)] font-semibold leading-[1.02] tracking-[-0.035em] text-ink">
+          <h2 className="font-display text-[32px] leading-[1.1] font-semibold tracking-[-0.03em] text-ink md:text-[48px] md:tracking-[-0.04em]">
             Your levels, watched for you.
           </h2>
-          <p className="mt-6 max-w-[44ch] text-[18px] leading-[1.55] text-ink-2">
+          <p className="mt-4 max-w-[44ch] text-base leading-normal text-ink-2">
             Set an upper or lower price on any symbol, once or on repeat. A background price poller
             checks it, so the alert fires whether or not Signalist is open, and lands in your alert
             inbox.
           </p>
           <Link
             href="/sign-up"
-            className="mt-8 inline-flex items-center gap-2 text-[15px] font-medium text-signal underline-offset-4 hover:underline"
+            className="mt-8 inline-flex items-center gap-2 text-base font-semibold text-ink underline-offset-4 hover:underline"
           >
             Set your first alert <ArrowRight className="size-4" />
           </Link>
@@ -193,24 +195,24 @@ function Alerts({ data }: { data: MarketingLiveData }) {
 
         {/* The printed thing of this world: an alert slip, filled from the live quote */}
         <div data-reveal style={{ '--i': 1 } as React.CSSProperties} className="mx-auto w-full max-w-[460px]">
-          <div className="rounded-t-xl bg-signal px-7 pb-6 pt-7 text-signal-ink">
-            <div className="text-[14px] font-medium opacity-75">Price alert</div>
+          <div className="rounded-t-lg bg-signal px-6 pt-6 pb-6 text-signal-ink">
+            <div className="text-sm font-semibold">Price alert</div>
             <div className="mt-2 flex items-baseline justify-between gap-4">
-              <span className="mono text-[44px] font-semibold leading-none tracking-[-0.03em]">
+              <span className="num text-[32px] leading-none font-semibold tracking-[-0.03em]">
                 {data.hero.symbol}
               </span>
-              <span className="text-[15px] font-medium">NVIDIA</span>
+              <span className="text-base font-semibold">NVIDIA</span>
             </div>
           </div>
-          <dl className="rounded-b-xl bg-surface-2 px-7 py-3">
+          <dl className="rounded-b-lg border border-t-0 border-line bg-surface px-6">
             {rows.map(([k, v]) => (
-              <div key={k} className="flex items-baseline justify-between gap-4 py-3">
-                <dt className="text-[15px] text-ink-3">{k}</dt>
-                <dd className="mono whitespace-pre text-[16px] text-ink">{v}</dd>
+              <div key={k} className="flex items-baseline justify-between gap-4 border-b border-line py-3 last:border-0">
+                <dt className="text-sm text-ink-3">{k}</dt>
+                <dd className="num text-base whitespace-pre text-ink">{v}</dd>
               </div>
             ))}
           </dl>
-          <p className="mt-4 text-center text-[13px] text-ink-3">
+          <p className="mt-4 text-center text-sm text-ink-3">
             Built from the live {data.hero.symbol} quote.
           </p>
         </div>
@@ -223,27 +225,27 @@ function Research({ data }: { data: MarketingLiveData }) {
   const r = data.research;
   if (!r) return null;
   return (
-    <section id="research" className="mx-auto w-full max-w-[1320px] scroll-mt-8 px-4 pb-28 md:px-8 md:pb-44">
+    <section id="research" className="mx-auto w-full max-w-[1120px] scroll-mt-8 px-4 py-16 md:px-8 md:py-24">
       <h2
         data-reveal
-        className="max-w-[18ch] text-[clamp(2rem,4.4vw,4rem)] font-semibold leading-[1.02] tracking-[-0.035em] text-ink"
+        className="font-display max-w-[18ch] text-[32px] leading-[1.1] font-semibold tracking-[-0.03em] text-ink md:text-[48px] md:tracking-[-0.04em]"
       >
         Numbers first. Words second.
       </h2>
-      <p data-reveal className="mt-6 max-w-[56ch] text-[18px] leading-[1.55] text-ink-2">
+      <p data-reveal className="mt-4 max-w-[65ch] text-base leading-normal text-ink-2">
         Signalist computes the factors in Python (trend, RSI, MACD, momentum, risk), then the
         narrative is written only from those figures, with a confidence score you can weigh.
       </p>
 
       <div className="mt-16 grid gap-10 md:mt-20 md:grid-cols-[auto_minmax(0,1fr)] md:gap-16">
         <div data-reveal>
-          <div className="mono text-[clamp(5rem,14vw,11rem)] font-medium leading-[0.85] tracking-[-0.05em] text-signal">
+          <div className="num text-[48px] leading-none font-semibold tracking-[-0.04em] text-ink">
             {r.confidence}%
           </div>
-          <div className="mt-3 text-[15px] text-ink-2">confidence on {r.symbol}</div>
+          <div className="mt-2 text-base text-ink-2">confidence on {r.symbol}</div>
         </div>
         <blockquote data-reveal style={{ '--i': 1 } as React.CSSProperties} className="self-end">
-          <p className="max-w-[30ch] text-[clamp(1.5rem,2.6vw,2.25rem)] leading-[1.25] tracking-[-0.015em] text-ink">
+          <p className="font-display max-w-[36ch] text-2xl leading-snug tracking-[-0.02em] text-ink">
             “{r.summary}”
           </p>
           <footer className="mt-5 text-[14px] text-ink-3">
@@ -266,25 +268,25 @@ const PAPER_FACTS = [
 
 function Paper() {
   return (
-    <section id="paper" className="scroll-mt-8 bg-signal text-signal-ink">
-      <div className="mx-auto w-full max-w-[1320px] px-4 py-24 md:px-8 md:py-32">
+    <section id="paper" className="scroll-mt-8 border-y border-line bg-surface text-ink">
+      <div className="mx-auto w-full max-w-[1120px] px-4 py-16 md:px-8 md:py-24">
         <h2
           data-reveal
-          className="max-w-[16ch] text-[clamp(2rem,4.4vw,4rem)] font-semibold leading-[1.02] tracking-[-0.035em]"
+          className="font-display max-w-[16ch] text-[32px] leading-[1.1] font-semibold tracking-[-0.03em] md:text-[48px] md:tracking-[-0.04em]"
         >
           Practise on paper first.
         </h2>
-        <p data-reveal className="mt-6 max-w-[48ch] text-[18px] leading-[1.55] opacity-80">
+        <p data-reveal className="mt-4 max-w-[48ch] text-base leading-normal text-ink-2">
           Size a position, watch it against the market, and see your realized P/L, without a
           brokerage account anywhere in the loop.
         </p>
-        <dl className="mt-16 grid grid-cols-2 gap-x-8 gap-y-12 md:mt-20 lg:grid-cols-4">
+        <dl className="mt-12 grid grid-cols-2 gap-x-8 gap-y-8 md:mt-16 lg:grid-cols-4">
           {PAPER_FACTS.map((f, i) => (
             <div key={f.big} data-reveal style={{ '--i': i } as React.CSSProperties}>
-              <dt className="text-[clamp(2.25rem,5vw,4.5rem)] font-semibold leading-none tracking-[-0.045em] tabular-nums">
+              <dt className="num text-[32px] leading-none font-semibold tracking-[-0.03em] text-ink">
                 {f.big}
               </dt>
-              <dd className="mt-3 text-[16px] opacity-80">{f.small}</dd>
+              <dd className="mt-2 text-base text-ink-2">{f.small}</dd>
             </div>
           ))}
         </dl>
@@ -296,13 +298,13 @@ function Paper() {
 function Api({ data }: { data: MarketingLiveData }) {
   const sym = data.hero.symbol;
   return (
-    <section id="api" className="mx-auto w-full max-w-[1320px] scroll-mt-8 px-4 py-28 md:px-8 md:py-44">
-      <div className="grid gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-20">
+    <section id="api" className="mx-auto w-full max-w-[1120px] scroll-mt-8 px-4 py-16 md:px-8 md:py-24">
+      <div className="grid gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16">
         <div data-reveal>
-          <h2 className="text-[clamp(2rem,4.4vw,4rem)] font-semibold leading-[1.02] tracking-[-0.035em] text-ink">
+          <h2 className="font-display text-[32px] leading-[1.1] font-semibold tracking-[-0.03em] text-ink md:text-[48px] md:tracking-[-0.04em]">
             Your signals, over HTTP.
           </h2>
-          <p className="mt-6 max-w-[40ch] text-[18px] leading-[1.55] text-ink-2">
+          <p className="mt-4 max-w-[40ch] text-base leading-normal text-ink-2">
             Create a key under API in the app and pull price, AI score, factors and indicators for
             any symbol into your own scripts.
           </p>
@@ -310,7 +312,7 @@ function Api({ data }: { data: MarketingLiveData }) {
         <pre
           data-reveal
           style={{ '--i': 1 } as React.CSSProperties}
-          className="mono overflow-x-auto rounded-xl bg-surface p-6 text-[13px] leading-[1.75] text-ink-2 md:p-8 md:text-[14px]"
+          className="min-w-0 overflow-x-auto rounded-lg border border-line bg-surface p-4 font-mono text-sm leading-normal whitespace-pre-wrap text-ink-2 md:p-6"
         >
           <code>
             <span className="text-ink-3">$ </span>
@@ -335,13 +337,13 @@ function Api({ data }: { data: MarketingLiveData }) {
 
 function Closing() {
   return (
-    <section className="mx-auto w-full max-w-[1320px] px-4 pb-28 md:px-8 md:pb-40">
+    <section className="mx-auto w-full max-w-[1120px] px-4 pb-16 md:px-8 md:pb-24">
       <div data-reveal className="flex flex-col items-start gap-8 md:flex-row md:items-end md:justify-between">
-        <h2 className="max-w-[12ch] text-[clamp(2.5rem,7vw,6rem)] font-semibold leading-[0.95] tracking-[-0.045em] text-ink">
+        <h2 className="font-display max-w-[12ch] text-[32px] leading-[1.1] font-semibold tracking-[-0.03em] text-ink md:text-[48px] md:tracking-[-0.04em]">
           Set your first level.
         </h2>
         <div className="flex flex-col items-start gap-3 md:items-end">
-          <Link href="/sign-up" className="yellow-btn h-12 px-6 text-[15px]">
+          <Link href="/sign-up" className="yellow-btn px-6">
             Create free account <ArrowRight className="size-4" />
           </Link>
           <p className="text-[14px] text-ink-3">Paper money only. No brokerage connection.</p>
@@ -372,7 +374,7 @@ function Footer() {
   ];
   return (
     <footer className="bg-surface">
-      <div className="mx-auto grid w-full max-w-[1320px] gap-10 px-4 py-14 md:grid-cols-[1.5fr_1fr_1fr] md:px-8">
+      <div className="mx-auto grid w-full max-w-[1120px] gap-8 px-4 py-12 md:grid-cols-[1.5fr_1fr_1fr] md:px-8">
         <div>
           <BrandLogo href="/" />
           <p className="mt-4 max-w-[40ch] text-[14px] leading-6 text-ink-3">
@@ -395,7 +397,7 @@ function Footer() {
           </div>
         ))}
       </div>
-      <div className="mx-auto w-full max-w-[1320px] px-4 pb-10 text-[13px] text-ink-3 md:px-8">
+      <div className="mx-auto w-full max-w-[1120px] px-4 pb-8 text-sm text-ink-3 md:px-8">
         © {new Date().getFullYear()} Signalist
       </div>
     </footer>

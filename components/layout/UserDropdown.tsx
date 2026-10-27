@@ -27,7 +27,7 @@ const UserDropdown = ({ user }: { user: User }) => {
       <DropdownMenuTrigger asChild>
         <button
           aria-label="Account"
-          className="press flex size-8 items-center justify-center rounded-full border border-line-strong bg-surface-2 text-[12px] font-semibold text-ink hover:border-ink-3"
+          className="press flex size-11 items-center justify-center rounded-full border border-line-strong bg-surface-2 text-xs font-semibold text-ink hover:border-ink-3"
         >
           {initials}
         </button>

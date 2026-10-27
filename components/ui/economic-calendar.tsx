@@ -136,7 +136,7 @@ export const EconomicCalendar = React.forwardRef<
                   transition: { type: 'spring', stiffness: 320, damping: 28 },
                 },
               }}
-              className="w-72 flex-none rounded-lg border border-line bg-surface p-4 transition-colors duration-150 hover:border-line-strong"
+              className="w-72 flex-none rounded-lg border border-line bg-surface p-4 transition-colors duration-200 hover:border-line-strong"
             >
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">

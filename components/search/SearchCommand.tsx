@@ -244,12 +244,12 @@ export function SearchCommand({ renderAs = 'button', label = 'Add stock', initia
           type="button"
           aria-label={label}
           onClick={() => setOpen(true)}
-          className="press flex size-9 items-center justify-center rounded-lg text-ink-2 hover:bg-surface-2 hover:text-ink"
+            className="press flex size-11 items-center justify-center rounded-lg text-ink-2 hover:bg-surface-2 hover:text-ink"
         >
           <Search className="h-[18px] w-[18px]" strokeWidth={1.5} />
         </button>
       )}
-      <CommandDialog open={open} onOpenChange={setOpen} className="search-dialog">
+      <CommandDialog open={open} onOpenChange={setOpen} className="search-dialog dialog-instant">
           <div className="search-field">
             <CommandInput value={searchTerm} onValueChange={setSearchTerm} placeholder="Search stocks..." className="search-input" />
             {loading && <Loader2 className="search-loader" />}

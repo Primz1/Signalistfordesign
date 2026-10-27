@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { ExternalLink, Loader2, Sparkles } from 'lucide-react';
+import { ExternalLink, Loader2 } from 'lucide-react';
 import CandlestickChart, { type IndicatorToggleKey } from './CandlestickChart';
 import { IndicatorGuide, type ExtraIndicators } from './IndicatorGuide';
 import SignalBadges from './SignalBadges';
@@ -122,59 +122,59 @@ export default function StockChartSection({
       {/* Header */}
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
         <div>
-          <div className="mb-3.5 flex flex-wrap items-center gap-3">
+          <div className="mb-4 flex min-w-0 flex-wrap items-center gap-3">
             {logo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={logo}
                 alt=""
-                className="size-10 rounded-lg bg-surface-2 object-contain p-1"
+                className="size-12 shrink-0 rounded-lg bg-surface-2 object-contain p-1"
               />
             ) : (
-              <div className="mono flex size-10 items-center justify-center rounded-lg bg-surface-3 text-sm font-semibold text-ink">
+              <div className="num flex size-12 shrink-0 items-center justify-center rounded-lg bg-surface-3 text-sm font-semibold text-ink">
                 {initials(company, symbol)}
               </div>
             )}
-            <h1 className="page-title">{company}</h1>
-            <span className="mono text-[13px] text-ink-2">({symbol})</span>
+            <h1 className="page-title min-w-0 break-words">{company}</h1>
+            <span className="num text-sm text-ink-2">({symbol})</span>
             {exchange ? (
-              <span className="rounded border border-line-strong px-1.5 py-0.5 text-[12px] text-ink-3">
+              <span className="rounded-lg border border-line-strong px-2 py-1 text-xs text-ink-3">
                 {exchange.split(/[\s/-]/)[0] || exchange}
               </span>
             ) : null}
           </div>
 
-          <div className="mb-1.5 flex flex-wrap items-baseline gap-3">
+          <div className="mb-2 flex flex-wrap items-baseline gap-3">
             {price != null ? (
-              <div className="figure text-[40px] leading-[44px] text-ink">
+              <div className="figure text-[32px] text-ink md:text-[48px]">
                 {formatPrice(price)}
               </div>
             ) : null}
             {changePct != null ? (
               <span
                 className={cn(
-                  'mono text-[15px]',
+                  'num text-base',
                   up ? 'text-up' : 'text-down'
                 )}
               >
                 {change != null
-                  ? `${up ? '+' : ''}${change.toFixed(2)} (${up ? '+' : ''}${changePct.toFixed(2)}%)`
-                  : `${up ? '+' : ''}${changePct.toFixed(2)}%`}
+                  ? `${up ? '+' : '−'}${Math.abs(change).toFixed(2)} (${up ? '+' : '−'}${Math.abs(changePct).toFixed(2)}% today)`
+                  : `${up ? '+' : '−'}${Math.abs(changePct).toFixed(2)}% today`}
               </span>
             ) : null}
           </div>
 
-          <div className="mono text-[13px] text-ink-3">
+          <div className="num text-sm text-ink-3">
             O {open != null ? open.toFixed(2) : '—'} · H {high != null ? high.toFixed(2) : '—'} · L{' '}
             {low != null ? low.toFixed(2) : '—'} · C {close != null ? close.toFixed(2) : '—'} · Vol{' '}
             {formatVol(vol)}
           </div>
         </div>
 
-        <div className="flex shrink-0 flex-col items-start gap-2.5 md:items-end">
+        <div className="flex shrink-0 flex-col items-start gap-3 md:items-end">
           {aiScore != null && Number.isFinite(aiScore) ? (
             <span
-              className="mono text-[14px] text-ink-2"
+              className="num text-sm text-ink-2"
             >
               AI score{' '}
               <span className={aiScore >= 60 ? 'text-up' : aiScore >= 40 ? 'text-ink' : 'text-down'}>
@@ -198,7 +198,7 @@ export default function StockChartSection({
       {/* Chart */}
       <div className="overflow-hidden rounded-lg border border-line bg-surface">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3">
-          <div className="flex gap-0.5 rounded-lg border border-line bg-canvas p-0.5" role="group" aria-label="Chart range">
+          <div className="flex flex-wrap gap-1 rounded-lg border border-line bg-canvas p-1" role="group" aria-label="Chart range">
             {CHART_RANGES.map((r) => (
               <button
                 key={r}
@@ -206,9 +206,9 @@ export default function StockChartSection({
                 onClick={() => loadRange(r)}
                 aria-pressed={range === r}
                 className={cn(
-                  'mono h-7 rounded-md px-2.5 text-[12px] transition-colors duration-150',
+                  'num press h-11 rounded-lg px-3 text-sm',
                   range === r
-                    ? 'bg-surface-2 text-ink'
+                    ? 'bg-surface-2 font-semibold text-ink'
                     : 'bg-transparent text-ink-2 hover:text-ink'
                 )}
               >
@@ -217,7 +217,7 @@ export default function StockChartSection({
             ))}
           </div>
 
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2">
             {TOGGLES.map((key) => {
               const on = overlays[key];
               return (
@@ -227,10 +227,10 @@ export default function StockChartSection({
                   onClick={() => toggleOverlay(key)}
                   aria-pressed={on}
                   className={cn(
-                    'h-7 rounded-md border px-2.5 text-[12px] transition-colors duration-150',
+                    'press h-11 rounded-lg border px-3 text-xs font-semibold tracking-[0.04em]',
                     on
-                      ? 'border-signal/50 bg-signal/10 text-signal'
-                      : 'border-line-strong text-ink-3 hover:text-ink-2'
+                      ? 'border-line-strong bg-surface-2 text-ink'
+                      : 'border-line text-ink-3 hover:text-ink'
                   )}
                 >
                   {key}
@@ -264,13 +264,10 @@ export default function StockChartSection({
 
       {/* AI analysis */}
       <div
-        className="mb-6 rounded-lg border border-line bg-surface p-5 md:p-6"
+        className="mb-6 rounded-lg border border-line bg-surface p-4 md:p-6"
       >
-        <h2 className="section-title mb-3 flex items-center gap-2">
-          <Sparkles className="size-4 text-signal" strokeWidth={1.5} />
-          AI analysis
-        </h2>
-        <p className="mb-4 max-w-[72ch] text-[15px] leading-6 text-ink">
+        <h2 className="section-title mb-3">AI analysis</h2>
+        <p className="mb-4 max-w-[72ch] text-base leading-normal text-ink">
           {aiSummary ||
             (chartData.indicators
               ? `${company} shows ${
@@ -284,7 +281,7 @@ export default function StockChartSection({
         </p>
         <Link
           href={`/research?symbol=${symbol}`}
-          className="inline-flex items-center gap-1.5 text-[14px] font-medium text-signal underline-offset-4 hover:underline"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-ink underline-offset-4 hover:underline"
         >
           Run full AI research on {symbol}
           <ExternalLink className="size-3.5" strokeWidth={1.5} />

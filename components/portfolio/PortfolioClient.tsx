@@ -309,7 +309,7 @@ function PerformanceChart({
         <CartesianGrid stroke={PALETTE.line} vertical={false} />
         <XAxis
           dataKey="label"
-          tick={{ fill: PALETTE.ink3, fontSize: 11, fontFamily: 'var(--font-geist-mono), ui-monospace, monospace' }}
+          tick={{ fill: PALETTE.ink3, fontSize: 11, fontFamily: '"IBM Plex Mono", ui-monospace, monospace' }}
           axisLine={{ stroke: PALETTE.lineStrong }}
           tickLine={false}
           interval={tickInterval}
@@ -317,7 +317,7 @@ function PerformanceChart({
         />
         <YAxis
           tickFormatter={compactUsd}
-          tick={{ fill: PALETTE.ink3, fontSize: 11, fontFamily: 'var(--font-geist-mono), ui-monospace, monospace' }}
+          tick={{ fill: PALETTE.ink3, fontSize: 11, fontFamily: '"IBM Plex Mono", ui-monospace, monospace' }}
           axisLine={false}
           tickLine={false}
           width={52}
@@ -578,7 +578,7 @@ export default function PortfolioClient({
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:gap-8">
         <div className="flex flex-col">
           <div className="label-sm">Total value</div>
-          <div className="figure mt-1 text-[44px] leading-none text-ink md:text-[52px]">
+          <div className="figure mt-1 text-[32px] text-ink md:text-[48px]">
             {formatPrice(portfolio.totalValue)}
           </div>
           <div className="mono mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[14px]">
@@ -953,7 +953,7 @@ export default function PortfolioClient({
                 <Input
                   value={symbol}
                   onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-                  className="form-input h-7 border-0 bg-transparent px-0 mono text-[14px] font-semibold text-ink shadow-none focus-visible:ring-0"
+                  className="form-input h-11 border-0 bg-transparent px-0 num text-base font-semibold text-ink shadow-none focus-visible:ring-0"
                   placeholder="AAPL"
                 />
                 <div className="truncate text-[12px] text-ink-3">
