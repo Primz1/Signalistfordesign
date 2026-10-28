@@ -36,12 +36,12 @@ export function EmptyState({
         className
       )}
     >
-      <div className="flex size-11 flex-none items-center justify-center rounded-lg bg-surface-2 text-signal">
+      <div className="flex size-11 flex-none items-center justify-center rounded-lg border border-line text-ink-2">
         <Icon className="size-5" strokeWidth={1.5} />
       </div>
       <div className="min-w-0 flex-1">
-        <h3 className="text-[15px] font-semibold text-ink">{title}</h3>
-        <p className="mt-1 max-w-[52ch] text-[14px] leading-6 text-ink-2">{description}</p>
+        <h3 className="text-base font-semibold text-ink">{title}</h3>
+        <p className="mt-1 max-w-[65ch] text-sm leading-normal text-ink-2">{description}</p>
       </div>
       {(actionLabel && actionHref) || (actionLabel && onAction) ? (
         <div className="flex-none">

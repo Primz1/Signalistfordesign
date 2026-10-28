@@ -31,6 +31,20 @@ const serializeWatchlistItem = (item: Record<string, unknown> | null | undefined
 
 const getSessionUser = async () => getCachedUser();
 
+/** Recent mutation keys, so a double-click or retry does not apply twice. */
+const claimedKeys = new Map<string, number>();
+
+function claimIdempotencyKey(key?: string) {
+  if (!key) return true;
+  const now = Date.now();
+  for (const [seen, at] of claimedKeys) {
+    if (now - at > 120_000) claimedKeys.delete(seen);
+  }
+  if (claimedKeys.has(key)) return false;
+  claimedKeys.set(key, now);
+  return true;
+}
+
 export async function getWatchlistSymbolsByEmail(email: string): Promise<string[]> {
   if (!email) return [];
 
@@ -88,10 +102,14 @@ export async function listWatchlistSymbols(): Promise<ActionResult<string[]>> {
 
 export async function addToWatchlist(
   symbol: string,
-  company: string
+  company: string,
+  idempotencyKey?: string
 ): Promise<ActionResult<SerializedWatchlistItem>> {
   if (!symbol?.trim() || !company?.trim()) {
     return { success: false, message: 'Symbol and company are required' };
+  }
+  if (!claimIdempotencyKey(idempotencyKey)) {
+    return { success: true, data: serializeWatchlistItem({ symbol, company, userId: '' }) };
   }
 
   try {
@@ -112,10 +130,14 @@ export async function addToWatchlist(
 }
 
 export async function removeFromWatchlist(
-  symbol: string
+  symbol: string,
+  idempotencyKey?: string
 ): Promise<ActionResult<SerializedWatchlistItem>> {
   if (!symbol?.trim()) {
     return { success: false, message: 'Symbol is required' };
+  }
+  if (!claimIdempotencyKey(idempotencyKey)) {
+    return { success: true, data: serializeWatchlistItem({ symbol, userId: '' }) };
   }
 
   try {

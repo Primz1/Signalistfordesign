@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { removeFromWatchlist } from "@/lib/actions/watchlist.actions";
+import { addToWatchlist, removeFromWatchlist } from "@/lib/actions/watchlist.actions";
 import { notify } from "@/lib/notify";
 import clsx from "clsx";
-import { BellPlus, Loader2, Star } from "lucide-react";
+import { BellPlus, Star } from "lucide-react";
 import Link from "next/link";
 import { EmptyState as SignalistEmptyState } from "@/components/ui/empty-state";
+import { formatMarketCapValue } from "@/lib/utils";
 
 type WatchlistEntry = {
 	_id?: string;
@@ -30,13 +32,6 @@ type WatchlistTableProps = {
 	onAddAlert?: (entry: WatchlistEntry) => void;
 };
 
-const formatDate = (value?: string | Date) => {
-	if (!value) return "-";
-	const d = typeof value === "string" ? new Date(value) : value;
-	if (Number.isNaN(d.getTime())) return "-";
-	return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-};
-
 const EmptyState = () => (
 	<SignalistEmptyState
 		title="No symbols yet"
@@ -45,38 +40,52 @@ const EmptyState = () => (
 );
 
 const formatNumber = (value?: number, opts: Intl.NumberFormatOptions = {}) => {
-	if (value === undefined || value === null || Number.isNaN(value)) return '-';
+	if (value === undefined || value === null || Number.isNaN(value)) return '—';
 	return new Intl.NumberFormat(undefined, opts).format(value);
 };
 
 const formatCurrency = (value?: number) => formatNumber(value, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
 const formatPrice = (value?: number) => {
-	if (value === undefined || value === null || Number.isNaN(value)) return '-';
+	if (value === undefined || value === null || Number.isNaN(value)) return '—';
 	return formatCurrency(value);
 };
 
 const WatchlistTable = ({ items, onAddAlert }: WatchlistTableProps) => {
 	const [rows, setRows] = useState<WatchlistEntry[]>(items);
-	const [pendingSymbol, setPendingSymbol] = useState<string | null>(null);
-	const [isPending, startTransition] = useTransition();
+	const [, startTransition] = useTransition();
+	const generation = useRef(0);
 
 	useEffect(() => {
 		setRows(items);
 	}, [items]);
 
-	const handleRemove = (symbol: string) => {
-		setPendingSymbol(symbol);
+	const handleRemove = (symbol: string, company: string) => {
+		const snapshot = rows;
+		const key = crypto.randomUUID();
+		const id = ++generation.current;
+		setRows((prev) => prev.filter((row) => row.symbol !== symbol));
+		const request = removeFromWatchlist(symbol, key);
+		toast(`${symbol} removed from watchlist`, {
+			action: {
+				label: "Undo",
+				onClick: () => {
+					if (generation.current !== id) return;
+					generation.current += 1;
+					setRows(snapshot);
+					void request.then((res) => {
+						if (res.success) void addToWatchlist(symbol, company, crypto.randomUUID());
+					});
+				},
+			},
+		});
 		startTransition(async () => {
-			const res = await removeFromWatchlist(symbol);
+			const res = await request;
+			if (generation.current !== id) return;
 			if (!res.success) {
+				setRows(snapshot);
 				notify.watchlistFailed("remove", res.message);
-				setPendingSymbol(null);
-				return;
 			}
-			setRows((prev) => prev.filter((row) => row.symbol !== symbol));
-			setPendingSymbol(null);
-			notify.watchlistRemoved(symbol);
 		});
 	};
 
@@ -84,14 +93,15 @@ const WatchlistTable = ({ items, onAddAlert }: WatchlistTableProps) => {
 		if (!rows.length) return <EmptyState />;
 
 		return (
-			<div className="surface-card overflow-x-auto">
-				<Table>
+			<div className="surface-card">
+				<Table className="table-fixed">
 					<TableHeader>
-						<TableRow className="border-b border-line">
+						<TableRow className="border-b border-line hover:bg-transparent">
 							<TableHead className="w-12"><span className="sr-only">Remove</span></TableHead>
 							<TableHead>Symbol</TableHead>
 							<TableHead className="text-right">Price</TableHead>
 							<TableHead className="text-right">Today</TableHead>
+							<TableHead className="hidden text-right lg:table-cell">Market cap</TableHead>
 							<TableHead className="hidden text-right md:table-cell">Day range</TableHead>
 							<TableHead className="hidden text-right sm:table-cell">AI score</TableHead>
 							<TableHead className="hidden w-28 text-right sm:table-cell"><span className="sr-only">Alert</span></TableHead>
@@ -99,43 +109,43 @@ const WatchlistTable = ({ items, onAddAlert }: WatchlistTableProps) => {
 					</TableHeader>
 					<TableBody>
 						{rows.map((row) => {
-							const busy = isPending && pendingSymbol === row.symbol;
 							const ch = row.changePercent;
 							return (
-								<TableRow key={row.symbol} className="group hover:bg-surface-2">
-									<TableCell className="w-10 py-3 pl-2 pr-0 sm:pl-3">
+								<TableRow key={row.symbol} className="group h-12 hover:bg-surface-2">
+									<TableCell className="w-12 py-0 pr-0 pl-1">
 										<button
-											onClick={() => handleRemove(row.symbol)}
-											disabled={busy}
-											aria-busy={busy}
+											onClick={() => handleRemove(row.symbol, row.company)}
 											aria-label={`Remove ${row.symbol} from watchlist`}
-											className="press inline-flex size-8 items-center justify-center rounded-md text-signal hover:bg-surface-3 disabled:opacity-60"
+											className="press hit-slop inline-flex size-11 items-center justify-center rounded-lg text-ink-3 hover:bg-surface-3 hover:text-ink"
 											title="Remove from watchlist"
 										>
-											{busy ? <Loader2 className="size-4 animate-spin" /> : <Star className="size-4 fill-current" />}
+											<Star className="size-4 fill-current" />
 										</button>
 									</TableCell>
-									<TableCell className="py-3">
+									<TableCell className="max-w-0 py-0">
 										<Link href={`/stocks/${row.symbol}`} className="block min-w-0">
-											<span className="mono block text-[14px] font-medium text-ink">{row.symbol}</span>
-											<span className="block max-w-[120px] truncate text-[13px] text-ink-3 sm:max-w-[220px]">{row.company}</span>
+											<span className="num block text-sm font-semibold text-ink">{row.symbol}</span>
+											<span className="block truncate text-xs text-ink-3" title={row.company}>{row.company}</span>
 										</Link>
 									</TableCell>
-									<TableCell className="mono py-3 text-right text-[14px] text-ink">{formatCurrency(row.price)}</TableCell>
+									<TableCell className="num py-0 text-right text-sm text-ink">{formatCurrency(row.price)}</TableCell>
 									<TableCell
 										className={clsx(
-											'mono py-3 text-right text-[14px]',
+											'num py-0 text-right text-sm',
 											typeof ch === 'number' ? (ch >= 0 ? 'text-up' : 'text-down') : 'text-ink-3'
 										)}
 									>
 										{typeof ch === 'number' ? `${ch >= 0 ? '+' : '−'}${Math.abs(ch).toFixed(2)}%` : '—'}
 									</TableCell>
-									<TableCell className="mono hidden py-3 text-right text-[13px] text-ink-2 md:table-cell">
+									<TableCell className="num hidden py-0 text-right text-sm text-ink lg:table-cell">
+										{row.marketCap != null ? formatMarketCapValue(row.marketCap * 1_000_000) : '—'}
+									</TableCell>
+									<TableCell className="num hidden py-0 text-right text-sm text-ink-2 md:table-cell">
 										{row.dayLow != null && row.dayHigh != null
 											? `${formatPrice(row.dayLow)} – ${formatPrice(row.dayHigh)}`
 											: '—'}
 									</TableCell>
-									<TableCell className="mono hidden py-3 text-right text-[14px] sm:table-cell">
+									<TableCell className="num hidden py-0 text-right text-sm sm:table-cell">
 										{row.aiScore != null ? (
 											<span className={row.aiScore >= 65 ? 'text-up' : row.aiScore >= 45 ? 'text-ink' : 'text-down'}>
 												{Math.round(row.aiScore)}
@@ -144,8 +154,8 @@ const WatchlistTable = ({ items, onAddAlert }: WatchlistTableProps) => {
 											<span className="text-ink-3">—</span>
 										)}
 									</TableCell>
-									<TableCell className="hidden py-3 pr-3 text-right sm:table-cell">
-										<Button variant="outline" size="sm" aria-label={`New alert for ${row.symbol}`} className="px-2.5" onClick={() => onAddAlert?.(row)}>
+									<TableCell className="hidden py-0 pr-2 text-right sm:table-cell">
+										<Button variant="outline" size="sm" aria-label={`New alert for ${row.symbol}`} className="px-3" onClick={() => onAddAlert?.(row)}>
 											<BellPlus className="size-3.5" />
 											<span className="hidden sm:inline">Alert</span>
 										</Button>
@@ -157,7 +167,7 @@ const WatchlistTable = ({ items, onAddAlert }: WatchlistTableProps) => {
 				</Table>
 			</div>
 		);
-	}, [rows, isPending, pendingSymbol]);
+	}, [rows]);
 
 	return content;
 };

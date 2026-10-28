@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { PALETTE, SERIES } from '@/lib/theme';
+import { corridorToRect, isPointInSafeTriangle, pointInRect } from '@/lib/ui/safe-triangle';
 
 /** Portfolio allocation donut — sized to fill the card; legend stays tight. */
 
@@ -46,6 +47,23 @@ export function SectorsDonut({
 }) {
   const reduced = useReducedMotion();
   const [hot, setHot] = useState<number | null>(null);
+  const legendRef = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<HTMLDivElement>(null);
+
+  const travel = (from: { x: number; y: number }, target: DOMRect | undefined, index: number) => {
+    if (!target) {
+      setHot(null);
+      return;
+    }
+    const stop = (event: PointerEvent) => {
+      const point = { x: event.clientX, y: event.clientY };
+      if (pointInRect(point, target) || isPointInSafeTriangle(point, ...corridorToRect(from, target))) return;
+      window.removeEventListener('pointermove', stop);
+      setHot((current) => (current === index ? null : current));
+    };
+    window.addEventListener('pointermove', stop);
+    window.setTimeout(() => window.removeEventListener('pointermove', stop), 360);
+  };
 
   let acc = 0;
   const arcs = sectors.map((s, i) => {
@@ -64,7 +82,7 @@ export function SectorsDonut({
       )}
     >
       {/* Ring — fills its column */}
-      <div className="relative mx-auto aspect-square w-full max-w-[220px]">
+      <div ref={ringRef} className="relative mx-auto aspect-square w-full max-w-[220px]">
         <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="h-full w-full -rotate-90">
           <circle
             cx={CX}
@@ -92,7 +110,10 @@ export function SectorsDonut({
                 reduced ? { duration: 0 } : { duration: 0.3, ease: EASE, delay: 0.04 * i }
               }
               onMouseEnter={() => setHot(i)}
-              onMouseLeave={() => setHot(null)}
+              onMouseLeave={(event) => {
+                const target = legendRef.current?.querySelectorAll('button')[i]?.getBoundingClientRect();
+                travel({ x: event.clientX, y: event.clientY }, target, i);
+              }}
               style={{ cursor: 'default' }}
             />
           ))}
@@ -118,13 +139,16 @@ export function SectorsDonut({
       </div>
 
       {/* Legend — percent sits right next to the ticker, not pushed to the far edge */}
-      <div className="flex min-w-0 flex-col justify-center gap-1">
+      <div ref={legendRef} className="flex min-w-0 flex-col justify-center gap-1">
         {arcs.map((a, i) => (
           <button
             key={a.label}
             type="button"
             onMouseEnter={() => setHot(i)}
-            onMouseLeave={() => setHot(null)}
+            onMouseLeave={(event) => {
+              const target = ringRef.current?.getBoundingClientRect();
+              travel({ x: event.clientX, y: event.clientY }, target, i);
+            }}
             onFocus={() => setHot(i)}
             onBlur={() => setHot(null)}
             className={cn(

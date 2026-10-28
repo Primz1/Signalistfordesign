@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionCookie } from 'better-auth/cookies';
 
 /** Public: marketing home + auth. Everything else requires a session. */
-const PUBLIC_PATHS = ['/', '/sign-in', '/sign-up'];
+const PUBLIC_PATHS = ['/', '/sign-in', '/sign-up', '/preview'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

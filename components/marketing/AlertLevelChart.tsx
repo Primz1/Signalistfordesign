@@ -132,22 +132,22 @@ export function AlertLevelChart({
     <figure className={cn('@container w-full', className)}>
       <figcaption className="flex flex-col gap-4 @3xl:flex-row @3xl:items-end @3xl:justify-between">
         <div>
-          <div className="text-[15px] text-ink-2">
-            <span className="mono font-medium text-ink">{symbol}</span> · daily candles, last{' '}
+          <div className="text-base text-ink-2">
+            <span className="num font-semibold text-ink">{symbol}</span> · daily candles, last{' '}
             {sessions} sessions
           </div>
-          <div className="mt-1 text-[14px] text-ink-3">
-            Drag the amber level. Sessions that touched it light up.
+          <div className="mt-1 text-sm text-ink-3">
+            Drag the level. Sessions that touched it are marked.
           </div>
         </div>
         <div aria-live="polite" className="@3xl:text-right">
-          <div className="mono text-[40px] font-medium leading-none tracking-[-0.03em] text-ink md:text-[48px]">
+          <div className="num text-[32px] leading-none font-semibold tracking-[-0.03em] text-ink md:text-[48px] md:tracking-[-0.04em]">
             {count}
-            <span className="ml-2 font-sans text-[16px] font-normal tracking-normal text-ink-2">
+            <span className="ml-2 text-base font-normal tracking-normal text-ink-2">
               {count === 1 ? 'time price reached it' : 'times price reached it'}
             </span>
           </div>
-          <div className="mono mt-2 text-[13px] text-ink-3">
+          <div className="num mt-2 text-sm text-ink-3">
             at {levelLabel}
             {lastLabel ? ` · last on ${lastLabel}` : ''} · now{' '}
             {Math.abs(distance).toFixed(1)}% {distance >= 0 ? 'above' : 'below'}
@@ -177,11 +177,23 @@ export function AlertLevelChart({
           role="img"
           aria-label={`${symbol} daily price, ${sessions} sessions, ranging from ${fmt(lo, step)} to ${fmt(hi, step)}`}
         >
+          {[0.2, 0.4, 0.6, 0.8].map((t) => (
+            <line
+              key={t}
+              x1={0}
+              x2={W}
+              y1={PAD_Y + t * (H - PAD_Y * 2)}
+              y2={PAD_Y + t * (H - PAD_Y * 2)}
+              stroke="var(--sg-line)"
+              strokeWidth={1}
+              vectorEffect="non-scaling-stroke"
+            />
+          ))}
           {candles.map((c, i) => {
             const x = i * slot + slot / 2;
             const touched = c.low <= level && level <= c.high;
             const up = c.close >= c.open;
-            const color = touched ? 'var(--sg-signal)' : up ? 'var(--sg-ink-3)' : 'var(--sg-line-strong)';
+            const color = touched ? 'var(--sg-signal)' : up ? 'var(--sg-up)' : 'var(--sg-down)';
             const top = y(Math.max(c.open, c.close));
             const bottom = y(Math.min(c.open, c.close));
             return (
@@ -231,8 +243,8 @@ export function AlertLevelChart({
           aria-valuetext={`${levelLabel}, ${count} crossings`}
           onKeyDown={onKey}
           className={cn(
-            'mono absolute right-0 flex h-8 -translate-y-1/2 items-center gap-1.5 rounded-md bg-signal px-2.5 text-[13px] font-semibold text-signal-ink outline-offset-4',
-            dragging ? 'scale-[1.04]' : 'transition-[top] duration-150 ease-[var(--ease-out-ui)]'
+            'num absolute right-0 flex h-11 -translate-y-1/2 items-center gap-2 rounded-lg bg-signal px-3 text-sm font-semibold text-signal-ink outline-offset-4',
+            dragging ? 'scale-[1.04]' : 'transition-[top] duration-200 ease-[var(--ease-out-ui)]'
           )}
           style={{ top: `${levelPct}%` }}
         >

@@ -32,13 +32,17 @@ function DialogClose({
 
 function DialogOverlay({
   className,
+  instant = false,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
+}: React.ComponentProps<typeof DialogPrimitive.Overlay> & { instant?: boolean }) {
   return (
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/65",
+        "fixed inset-0 z-50 bg-ink/40",
+        instant
+          ? "dialog-instant"
+          : "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 duration-200",
         className
       )}
       {...props}
@@ -50,17 +54,23 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  instant = false,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
+  /** Command palette and other keyboard surfaces: no enter/exit motion. */
+  instant?: boolean
 }) {
   return (
     <DialogPortal data-slot="dialog-portal">
-      <DialogOverlay />
+      <DialogOverlay instant={instant} />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-line-strong bg-surface p-6 shadow-[0_24px_64px_rgba(0,0,0,0.6)] duration-200 sm:max-w-lg",
+          "fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-line-strong bg-surface p-6 shadow-none sm:max-w-lg",
+          instant
+            ? "dialog-instant"
+            : "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]",
           className
         )}
         {...props}
@@ -69,7 +79,7 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="absolute top-3.5 right-3.5 flex size-8 cursor-pointer items-center justify-center rounded-md text-ink-3 transition-colors hover:bg-surface-2 hover:text-ink disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+            className="press absolute top-2 right-2 flex size-11 cursor-pointer items-center justify-center rounded-lg text-ink-3 hover:bg-surface-2 hover:text-ink disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
           >
             <XIcon />
             <span className="sr-only">Close</span>
@@ -110,7 +120,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("text-lg leading-6 font-semibold tracking-[-0.01em] text-ink", className)}
+      className={cn("text-xl leading-tight font-semibold tracking-[-0.02em] text-ink", className)}
       {...props}
     />
   )

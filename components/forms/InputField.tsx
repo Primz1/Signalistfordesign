@@ -24,7 +24,7 @@ const InputField = ({
   const inputType = isPassword ? (showPassword ? 'text' : 'password') : type;
 
   return (
-    <div className={cn('space-y-1.5', className)} style={style}>
+    <div className={cn('space-y-2', className)} style={style}>
       <Label htmlFor={name} className="form-label">
         {label}
       </Label>
@@ -35,7 +35,8 @@ const InputField = ({
           placeholder={placeholder}
           disabled={disabled}
           value={value}
-          className={cn('form-input', isPassword && 'pr-11', {
+          aria-invalid={error ? true : undefined}
+          className={cn('form-input', isPassword && 'pr-12', error && 'border-down', {
             'opacity-50 cursor-not-allowed': disabled,
           })}
           {...register(name, validation)}
@@ -45,13 +46,17 @@ const InputField = ({
             type="button"
             aria-label={showPassword ? 'Hide password' : 'Show password'}
             onClick={() => setShowPassword((s) => !s)}
-            className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-ink-3 hover:text-ink"
+            className="press absolute top-1/2 right-0 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg text-ink-3 hover:text-ink"
           >
             {showPassword ? <EyeOff className="h-[18px] w-[18px]" strokeWidth={1.5} /> : <Eye className="h-[18px] w-[18px]" strokeWidth={1.5} />}
           </button>
         )}
       </div>
-      {error && <p className="text-[13px] text-down">{error.message || 'Check this field'}</p>}
+      {error && (
+        <p className="text-sm text-down" role="alert">
+          {error.message || 'Check this field'}
+        </p>
+      )}
     </div>
   );
 };

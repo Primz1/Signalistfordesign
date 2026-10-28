@@ -11,7 +11,7 @@ function NavPendingDot() {
   if (!pending) return null;
   return (
     <span
-      className="ml-1.5 inline-block size-1.5 animate-pulse-soft rounded-full bg-signal"
+      className="ml-2 inline-block size-1 shrink-0 animate-pulse-soft rounded-full bg-ink"
       aria-hidden
     />
   );
@@ -20,43 +20,75 @@ function NavPendingDot() {
 const NavItems = ({
   className,
   itemClassName,
+  variant = 'rail',
 }: {
   className?: string;
   itemClassName?: string;
+  variant?: 'rail' | 'tabs';
 }) => {
   const pathname = usePathname();
 
   const isActive = (path: string) => {
+    if (pathname.startsWith('/preview')) {
+      const leaf = pathname.split('/').filter(Boolean)[1] || 'dashboard';
+      if (path === '/dashboard') return leaf === 'dashboard';
+      if (path === '/stocks') return leaf === 'stock';
+      return path.replace(/^\//, '') === leaf;
+    }
     if (path === '/dashboard') return pathname === '/dashboard' || pathname === '/';
     return pathname.startsWith(path);
   };
 
+  if (variant === 'tabs') {
+    return (
+      <nav
+        aria-label="Primary"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas pb-[env(safe-area-inset-bottom)] md:hidden"
+      >
+        <ul className="grid grid-cols-4">
+          {NAV_ITEMS.map(({ href, label }) => {
+            const active = isActive(href);
+            return (
+              <li key={href}>
+                <Link
+                  href={href}
+                  prefetch
+                  aria-current={active ? 'page' : undefined}
+                  className={cn(
+                    'press flex h-16 items-center justify-center px-1 text-center text-xs leading-tight',
+                    active ? 'font-semibold text-ink' : 'text-ink-3'
+                  )}
+                >
+                  {label}
+                  <NavPendingDot />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    );
+  }
+
   return (
-    <ul className={cn('flex h-14 items-center gap-1', className)}>
+    <ul className={cn('flex h-16 items-center gap-1', className)}>
       {NAV_ITEMS.map(({ href, label }) => {
         const active = isActive(href);
         return (
-          <li key={href} className="relative flex h-full items-center">
+          <li key={href} className="flex h-full items-center">
             <Link
               href={href}
+              prefetch
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'inline-flex h-8 items-center whitespace-nowrap rounded-md px-3 text-[14px] transition-colors duration-150',
-                active
-                  ? 'font-medium text-ink'
-                  : 'text-ink-2 hover:bg-surface-2 hover:text-ink',
+                'inline-flex h-11 items-center whitespace-nowrap rounded-lg px-3 text-sm',
+                active ? 'bg-surface-2 font-semibold text-ink' : 'text-ink-2 hover:bg-surface-2 hover:text-ink',
                 itemClassName
               )}
             >
               {label}
               <NavPendingDot />
             </Link>
-            {active && (
-              <span
-                aria-hidden
-                className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-signal"
-              />
-            )}
           </li>
         );
       })}

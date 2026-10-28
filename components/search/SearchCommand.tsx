@@ -33,6 +33,7 @@ type SearchCommandProps = {
 
 const RECENT_STOCKS_KEY = 'signalist_recent_stocks'
 const MAX_RECENT_STOCKS = 10
+const searchCache = new Map<string, StockWithWatchlistStatus[]>()
 
 export function SearchCommand({ renderAs = 'button', label = 'Add stock', initialStocks, watchlistSymbols, onSelectStock, mode, quickAddEnabled, onQuickAdd, className, pill }: SearchCommandProps) {
   const [open, setOpen] = useState(false)
@@ -94,12 +95,16 @@ export function SearchCommand({ renderAs = 'button', label = 'Add stock', initia
       return;
     }
 
-    setLoading(true);
+    const query = searchTerm.trim();
+    const cached = searchCache.get(query.toLowerCase());
+    if (cached) setSearchResults(cached);
+    setLoading(!cached);
     try {
-      const results = await searchStocks(searchTerm.trim(), watchlistSymbols);
+      const results = await searchStocks(query, watchlistSymbols);
+      searchCache.set(query.toLowerCase(), results);
       setSearchResults(results);
     } catch {
-      setSearchResults([])
+      if (!cached) setSearchResults([])
     } finally {
       setLoading(false);
     }
@@ -160,7 +165,7 @@ export function SearchCommand({ renderAs = 'button', label = 'Add stock', initia
         const res = await onQuickAdd(stock);
         if (res === false) ok = false;
       } else {
-        const res = await addToWatchlist(stock.symbol, stock.name);
+        const res = await addToWatchlist(stock.symbol, stock.name, crypto.randomUUID());
         if (!res.success) {
           notify.watchlistFailed('add', res.message);
           ok = false;
@@ -244,12 +249,12 @@ export function SearchCommand({ renderAs = 'button', label = 'Add stock', initia
           type="button"
           aria-label={label}
           onClick={() => setOpen(true)}
-          className="press flex size-9 items-center justify-center rounded-lg text-ink-2 hover:bg-surface-2 hover:text-ink"
+            className="press flex size-11 items-center justify-center rounded-lg text-ink-2 hover:bg-surface-2 hover:text-ink"
         >
           <Search className="h-[18px] w-[18px]" strokeWidth={1.5} />
         </button>
       )}
-      <CommandDialog open={open} onOpenChange={setOpen} className="search-dialog">
+      <CommandDialog open={open} onOpenChange={setOpen} className="search-dialog dialog-instant">
           <div className="search-field">
             <CommandInput value={searchTerm} onValueChange={setSearchTerm} placeholder="Search stocks..." className="search-input" />
             {loading && <Loader2 className="search-loader" />}
@@ -366,8 +371,13 @@ export function SearchCommand({ renderAs = 'button', label = 'Add stock', initia
                 );
               })}
             </ul>
-            
-          )} 
+          )}
+          <div className="flex flex-wrap gap-4 border-t border-line px-4 py-2 text-xs text-ink-3">
+            <span><kbd className="font-sans">↑↓</kbd> Move</span>
+            <span><kbd className="font-sans">↵</kbd> Open</span>
+            <span><kbd className="font-sans">esc</kbd> Close</span>
+            <span className="ml-auto hidden sm:inline"><kbd className="font-sans">⌘K</kbd></span>
+          </div> 
         </CommandList>
       </CommandDialog>
     </>

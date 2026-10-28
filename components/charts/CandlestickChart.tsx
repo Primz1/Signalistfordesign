@@ -1,18 +1,20 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   createChart,
   ColorType,
   CandlestickSeries,
   HistogramSeries,
   LineSeries,
+  CrosshairMode,
+  LineStyle,
   type IChartApi,
   type Time,
 } from 'lightweight-charts';
 import type { Candle } from '@/lib/market/ohlcv';
 import { cn } from '@/lib/utils';
-import { PALETTE } from '@/lib/theme';
+import { readPalette } from '@/lib/theme';
 
 export type IndicatorToggleKey = 'SMA20' | 'SMA50' | 'RSI' | 'MACD' | 'BB';
 
@@ -67,6 +69,13 @@ export default function CandlestickChart({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  const [themeTick, setThemeTick] = useState(0);
+
+  useEffect(() => {
+    const obs = new MutationObserver(() => setThemeTick((n) => n + 1));
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
 
   const showSma20 = !!overlays.SMA20;
   const showSma50 = !!overlays.SMA50;
@@ -78,24 +87,51 @@ export default function CandlestickChart({
     if (!containerRef.current || !data.candles.length) return;
 
     const paneCount = 1 + (showRsi ? 1 : 0) + (showMacd ? 1 : 0);
+    const PALETTE = readPalette();
+    const mix = (color: string, amount: number) =>
+      `color-mix(in srgb, ${color} ${Math.round(amount * 100)}%, transparent)`;
     const chart = createChart(containerRef.current, {
       height,
       layout: {
         background: { type: ColorType.Solid, color: PALETTE.surface },
         textColor: PALETTE.ink3,
-        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-        fontSize: 11,
+        fontFamily: '"IBM Plex Mono", ui-monospace, monospace',
+        fontSize: 12,
+        attributionLogo: false,
         panes: {
           separatorColor: PALETTE.line,
           separatorHoverColor: PALETTE.lineStrong,
         },
       },
       grid: {
-        vertLines: { color: PALETTE.surface2 },
-        horzLines: { color: PALETTE.surface2 },
+        vertLines: { visible: false },
+        horzLines: { color: PALETTE.line, style: LineStyle.Solid },
       },
-      rightPriceScale: { borderColor: PALETTE.lineStrong },
-      timeScale: { borderColor: PALETTE.lineStrong },
+      crosshair: {
+        mode: CrosshairMode.Normal,
+        vertLine: {
+          color: PALETTE.ink3,
+          width: 1,
+          style: LineStyle.Dashed,
+          labelBackgroundColor: PALETTE.ink,
+        },
+        horzLine: {
+          color: PALETTE.ink3,
+          width: 1,
+          style: LineStyle.Dashed,
+          labelBackgroundColor: PALETTE.ink,
+        },
+      },
+      rightPriceScale: {
+        borderColor: PALETTE.line,
+        borderVisible: false,
+        entireTextOnly: true,
+      },
+      timeScale: { borderColor: PALETTE.line, borderVisible: false },
+      localization: {
+        priceFormatter: (price: number) =>
+          price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      },
     });
 
     chartRef.current = chart;
@@ -131,7 +167,7 @@ export default function CandlestickChart({
       data.candles.map((c) => ({
         time: c.time as unknown as Time,
         value: c.volume ?? 0,
-        color: c.close >= c.open ? 'rgba(71,207,121,0.32)' : 'rgba(247,93,89,0.32)',
+        color: c.close >= c.open ? mix(PALETTE.up, 0.35) : mix(PALETTE.down, 0.35),
       }))
     );
 
@@ -159,21 +195,21 @@ export default function CandlestickChart({
 
     if (showBb && series?.bollinger) {
       const upper = chart.addSeries(LineSeries, {
-        color: 'rgba(252,213,95,0.45)',
+        color: mix(PALETTE.signal, 0.55),
         lineWidth: 1,
         lineStyle: 2,
         priceLineVisible: false,
         lastValueVisible: false,
       });
       const lower = chart.addSeries(LineSeries, {
-        color: 'rgba(252,213,95,0.45)',
+        color: mix(PALETTE.signal, 0.55),
         lineWidth: 1,
         lineStyle: 2,
         priceLineVisible: false,
         lastValueVisible: false,
       });
       const mid = chart.addSeries(LineSeries, {
-        color: 'rgba(189,186,181,0.5)',
+        color: mix(PALETTE.ink3, 0.7),
         lineWidth: 1,
         priceLineVisible: false,
         lastValueVisible: false,
@@ -224,7 +260,7 @@ export default function CandlestickChart({
             return {
               time: c.time as unknown as Time,
               value: v,
-              color: v >= 0 ? 'rgba(71,207,121,0.5)' : 'rgba(247,93,89,0.5)',
+              color: v >= 0 ? mix(PALETTE.up, 0.55) : mix(PALETTE.down, 0.55),
             };
           })
           .filter((p) => Number.isFinite(p.value))
@@ -295,6 +331,7 @@ export default function CandlestickChart({
     showBb,
     showRsi,
     showMacd,
+    themeTick,
   ]);
 
   if (!data.candles.length) {

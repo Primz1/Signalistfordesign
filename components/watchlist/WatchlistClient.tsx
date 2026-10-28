@@ -108,7 +108,7 @@ const NewsGrid = ({ articles }: { articles: MarketNewsArticle[] }) => {
             key={`${article.id}-${article.url}`}
             href={article.url || "#"}
             target="_blank"
-            className="group block rounded-lg border border-line bg-surface p-4 transition-colors duration-150 hover:border-line-strong hover:bg-surface-2"
+            className="group block rounded-lg border border-line bg-surface p-4 transition-colors duration-200 hover:border-line-strong hover:bg-surface-2"
           >
             <div className="flex items-center justify-between text-xs text-ink-3">
               <span>{article.source}</span>

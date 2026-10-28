@@ -1,9 +1,9 @@
 "use client";
-import React, { useMemo, useState, useTransition } from "react";
+import React, { useMemo, useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
 import { addToWatchlist, removeFromWatchlist } from "@/lib/actions/watchlist.actions";
 import { notify } from "@/lib/notify";
 import { trackEvent } from "@/components/providers/PostHogProvider";
-import { Loader2 } from "lucide-react";
 
 const WatchlistButton = ({
   symbol,
@@ -15,7 +15,8 @@ const WatchlistButton = ({
   onWatchlistChange,
 }: WatchlistButtonProps) => {
   const [added, setAdded] = useState<boolean>(!!isInWatchlist);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
+  const generation = useRef(0);
 
   const label = useMemo(() => {
     if (type === "icon") return "";
@@ -23,29 +24,44 @@ const WatchlistButton = ({
   }, [added, type]);
 
   const handleClick = () => {
+    const sym = symbol.toUpperCase();
+    const wasAdded = added;
+    const key = crypto.randomUUID();
+    const id = ++generation.current;
+    setAdded(!wasAdded);
+    onWatchlistChange?.(sym, !wasAdded);
+
+    const request = wasAdded
+      ? removeFromWatchlist(sym, key)
+      : addToWatchlist(sym, company, key);
+
+    toast(wasAdded ? `${sym} removed from watchlist` : `${sym} added to watchlist`, {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          if (generation.current !== id) return;
+          generation.current += 1;
+          setAdded(wasAdded);
+          onWatchlistChange?.(sym, wasAdded);
+          void request.then((res) => {
+            if (!res.success) return;
+            if (wasAdded) void addToWatchlist(sym, company, crypto.randomUUID());
+            else void removeFromWatchlist(sym, crypto.randomUUID());
+          });
+        },
+      },
+    });
+
     startTransition(async () => {
-      const sym = symbol.toUpperCase();
-      if (added) {
-        const res = await removeFromWatchlist(sym);
-        if (!res.success) {
-          notify.watchlistFailed("remove", res.message);
-          return;
-        }
-        setAdded(false);
-        onWatchlistChange?.(sym, false);
-        trackEvent("watchlist_removed", { symbol: sym });
-        notify.watchlistRemoved(sym);
-      } else {
-        const res = await addToWatchlist(sym, company);
-        if (!res.success) {
-          notify.watchlistFailed("add", res.message);
-          return;
-        }
-        setAdded(true);
-        onWatchlistChange?.(sym, true);
-        trackEvent("watchlist_added", { symbol: sym });
-        notify.watchlistAdded(sym);
+      const res = await request;
+      if (generation.current !== id) return;
+      if (!res.success) {
+        setAdded(wasAdded);
+        onWatchlistChange?.(sym, wasAdded);
+        notify.watchlistFailed(wasAdded ? "remove" : "add", res.message);
+        return;
       }
+      trackEvent(wasAdded ? "watchlist_removed" : "watchlist_added", { symbol: sym });
     });
   };
 
@@ -54,19 +70,15 @@ const WatchlistButton = ({
       <button
         title={added ? `Remove ${symbol} from watchlist` : `Add ${symbol} to watchlist`}
         aria-label={added ? `Remove ${symbol} from watchlist` : `Add ${symbol} to watchlist`}
-        aria-busy={isPending}
-        className={`watchlist-icon-btn ${added ? "watchlist-icon-added" : ""}`}
+        className={`watchlist-icon-btn hit-slop ${added ? "watchlist-icon-added" : ""}`}
         onClick={handleClick}
-        disabled={isPending}
       >
-        {isPending ? (
-          <Loader2 className="watchlist-star animate-spin text-signal" />
-        ) : (
+        {(
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
-            fill={added ? "#FACC15" : "none"}
-            stroke="#FACC15"
+            fill={added ? "currentColor" : "none"}
+            stroke="currentColor"
             strokeWidth="1.5"
             className="watchlist-star"
           >
@@ -82,8 +94,8 @@ const WatchlistButton = ({
   }
 
   const outlineClass = added
-    ? "inline-flex h-9 w-auto items-center gap-1.5 rounded-lg border border-down bg-transparent px-3.5 text-[13px] font-medium text-down hover:bg-down/8"
-    : "inline-flex h-9 w-auto items-center gap-1.5 rounded-lg border border-signal bg-transparent px-3.5 text-[13px] font-medium text-signal hover:bg-signal/8";
+    ? "press inline-flex h-11 w-auto items-center gap-2 rounded-lg border border-down bg-transparent px-4 text-sm font-semibold text-down hover:bg-down/8"
+    : "press inline-flex h-11 w-auto items-center gap-2 rounded-lg border border-line-strong bg-transparent px-4 text-sm font-semibold text-ink hover:bg-surface-2";
 
   return (
     <button
@@ -93,12 +105,8 @@ const WatchlistButton = ({
           : `watchlist-btn ${added ? "watchlist-remove" : ""}`
       }
       onClick={handleClick}
-      disabled={isPending}
-      aria-busy={isPending}
     >
-      {isPending ? (
-        <Loader2 className="size-3.5 animate-spin" />
-      ) : (showTrashIcon || variant === "outline") && added ? (
+      {(showTrashIcon || variant === "outline") && added ? (
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -114,7 +122,7 @@ const WatchlistButton = ({
           />
         </svg>
       ) : null}
-      <span>{isPending ? "Working..." : label}</span>
+      <span>{label}</span>
     </button>
   );
 };

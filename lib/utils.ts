@@ -27,7 +27,7 @@ export function delay(ms: number) {
 
 // Formatted string like "$3.10T", "$900.00B", "$25.00M" or "$999,999.99"
 export function formatMarketCapValue(marketCapUsd: number): string {
-  if (!Number.isFinite(marketCapUsd) || marketCapUsd <= 0) return 'N/A';
+  if (!Number.isFinite(marketCapUsd) || marketCapUsd <= 0) return '—';
 
   if (marketCapUsd >= 1e12) return `$${(marketCapUsd / 1e12).toFixed(2)}T`; // Trillions
   if (marketCapUsd >= 1e9) return `$${(marketCapUsd / 1e9).toFixed(2)}B`; // Billions

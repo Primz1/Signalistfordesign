@@ -10,6 +10,7 @@ import { signInWithEmail } from '@/lib/actions/auth.actions';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { Loader2, X } from 'lucide-react';
+import OtpInput from '@/components/forms/OtpInput';
 
 const SignIn = () => {
   const router = useRouter();
@@ -54,7 +55,7 @@ const SignIn = () => {
         Welcome back
       </h1>
       <p
-        className="mb-8 animate-el text-[15px] leading-6 text-ink-2"
+        className="mb-8 animate-el text-base leading-normal text-ink-2"
         style={{ animationDelay: '160ms' }}
       >
         Sign in to keep tracking your signals — charts, AI research, and price alerts.
@@ -78,6 +79,19 @@ const SignIn = () => {
         >
           Check your inbox — verify your email to unlock alerts.
         </Alert>
+      )}
+
+      {showBanner && (
+        <div className="mb-6">
+          <p className="mb-2 text-sm text-ink-2">Or enter the one-time code from that email.</p>
+          <OtpInput
+            onComplete={() => {
+              toast('Code captured', {
+                description: 'Open the verification link in the same email to finish. Signalist confirms the account from that link.',
+              });
+            }}
+          />
+        </div>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

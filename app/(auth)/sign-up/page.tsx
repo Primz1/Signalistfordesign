@@ -59,7 +59,7 @@ const SignUp = () => {
         Create your account
       </h1>
       <p
-        className="mb-8 animate-el text-[15px] leading-6 text-ink-2"
+        className="mb-8 animate-el text-base leading-normal text-ink-2"
         style={{ animationDelay: '160ms' }}
       >
         Signalist personalizes signals based on your goals.
