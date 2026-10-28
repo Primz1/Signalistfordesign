@@ -63,4 +63,4 @@ export const getAuth = async () => {
   return authInstance;
 }
 
-export const auth = await getAuth();
+export const auth = (process.env.MONGODB_URI ? await getAuth() : null) as unknown as Awaited<ReturnType<typeof getAuth>>;

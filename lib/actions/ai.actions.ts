@@ -172,6 +172,7 @@ export type ExtraIndicatorsLatest = {
 };
 
 export async function getExtraIndicators(symbol: string) {
+  if (!process.env.MONGODB_URI) return { success: false, data: null };
   const session = await getCachedSession();
   if (!session?.user?.id) {
     return { success: false as const, message: 'Not authenticated' };

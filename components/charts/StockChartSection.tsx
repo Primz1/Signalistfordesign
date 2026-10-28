@@ -10,7 +10,8 @@ import WatchlistButton from '@/components/watchlist/WatchlistButton';
 import { getExtraIndicators } from '@/lib/actions/ai.actions';
 import { getChartData } from '@/lib/actions/market.actions';
 import { CHART_RANGES, type ChartRange } from '@/lib/market/ohlcv';
-import { cn, formatPrice } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import { SpotlightCard, CountUp } from '@/components/motion';
 
 type ChartPayload = Awaited<ReturnType<typeof getChartData>>;
 
@@ -39,6 +40,39 @@ function initials(name: string, symbol: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   return symbol.slice(0, 2).toUpperCase();
+}
+
+function clamp01to100(n: number) {
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+type Factor = { label: string; score: number; color: string };
+
+/** Derives a 4-factor AI decomposition strip from the technical indicators already on hand. */
+function deriveFactors(
+  indicators: ChartPayload['indicators'],
+  extras: { adx?: number | null } | null
+): Factor[] {
+  if (!indicators) return [];
+  const { sma20, sma50, rsi14, macd, bollinger } = indicators;
+
+  const trendSpread = sma50 !== 0 ? ((sma20 - sma50) / Math.abs(sma50)) * 100 : 0;
+  const trend = clamp01to100(50 + trendSpread * 6);
+
+  const momentum = clamp01to100(rsi14);
+
+  const bandWidth = bollinger.upper - bollinger.lower;
+  const macdScale = bandWidth > 0 ? (macd.histogram / bandWidth) * 100 : 0;
+  const macdScore = clamp01to100(50 + macdScale * 4);
+
+  const conviction = extras?.adx != null ? clamp01to100(extras.adx) : clamp01to100(50 + Math.abs(trendSpread) * 4);
+
+  return [
+    { label: 'Trend', score: trend, color: 'var(--sg-cobalt)' },
+    { label: 'Momentum', score: momentum, color: 'var(--sg-cyan)' },
+    { label: 'MACD impulse', score: macdScore, color: 'var(--sg-signal)' },
+    { label: 'Conviction', score: conviction, color: 'var(--sg-violet)' },
+  ];
 }
 
 export default function StockChartSection({
@@ -118,10 +152,12 @@ export default function StockChartSection({
     setOverlays((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const factors = deriveFactors(chartData.indicators, extras);
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
+      <SpotlightCard spotlightColor="cobalt" className="flex flex-col justify-between gap-4 p-5 md:flex-row md:items-start md:p-6">
         <div>
           <div className="mb-4 flex min-w-0 flex-wrap items-center gap-3">
             {logo ? (
@@ -149,17 +185,15 @@ export default function StockChartSection({
             ) : null}
           </div>
 
-          <div className="mb-2 flex flex-wrap items-baseline gap-3">
+          <div className="mb-3 flex flex-wrap items-baseline gap-3">
             {price != null ? (
-              <div className="figure text-[32px] text-ink md:text-[48px]">
-                {formatPrice(price)}
-              </div>
+              <CountUp value={price} decimals={2} prefix="$" className="figure block text-[32px] text-ink md:text-[48px]" />
             ) : null}
             {changePct != null ? (
               <span
                 className={cn(
-                  'num text-base',
-                  up ? 'text-up' : 'text-down'
+                  'num rounded-full px-2.5 py-1 text-sm font-semibold',
+                  up ? 'bg-up/15 text-up' : 'bg-down/15 text-down'
                 )}
               >
                 {change != null
@@ -169,10 +203,23 @@ export default function StockChartSection({
             ) : null}
           </div>
 
-          <div className="num text-sm text-ink-3">
-            O {open != null ? open.toFixed(2) : '—'} · H {high != null ? high.toFixed(2) : '—'} · L{' '}
-            {low != null ? low.toFixed(2) : '—'} · C {close != null ? close.toFixed(2) : '—'} · Vol{' '}
-            {formatVol(vol)}
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              ['O', open],
+              ['H', high],
+              ['L', low],
+              ['C', close],
+            ].map(([label, v]) => (
+              <span
+                key={label}
+                className="num concentric border border-[var(--sg-border-specular)] bg-[var(--sg-glass-hover)] px-2 py-1 text-xs text-ink-2"
+              >
+                <span className="text-ink-3">{label}</span> {v != null ? (v as number).toFixed(2) : '—'}
+              </span>
+            ))}
+            <span className="num concentric border border-[var(--sg-border-specular)] bg-[var(--sg-glass-hover)] px-2 py-1 text-xs text-ink-2">
+              <span className="text-ink-3">Vol</span> {formatVol(vol)}
+            </span>
           </div>
         </div>
 
@@ -196,13 +243,13 @@ export default function StockChartSection({
             showTrashIcon
           />
         </div>
-      </div>
+      </SpotlightCard>
 
       <SignalBadges signals={chartData.signals} />
 
       {/* Chart */}
-      <div className="overflow-hidden rounded-lg border border-line bg-surface">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3">
+      <SpotlightCard spotlightColor="cyan" className="overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--sg-border-specular)] px-4 py-3">
           <div className="concentric flex flex-wrap gap-1 border border-line bg-canvas p-1" role="group" aria-label="Chart range">
             {CHART_RANGES.map((r) => (
               <button
@@ -261,16 +308,14 @@ export default function StockChartSection({
             height={360}
           />
         </div>
-      </div>
+      </SpotlightCard>
 
       {chartData.indicators ? (
         <IndicatorGuide indicators={chartData.indicators} price={price} extras={extras} />
       ) : null}
 
       {/* AI analysis */}
-      <div
-        className="mb-6 rounded-lg border border-line bg-surface p-4 md:p-6"
-      >
+      <SpotlightCard spotlightColor="violet" className="mb-6 p-4 md:p-6">
         <h2 className="section-title mb-3">AI analysis</h2>
         <p className="mb-4 max-w-[72ch] text-base leading-normal text-ink">
           {aiSummary ||
@@ -284,6 +329,26 @@ export default function StockChartSection({
                 }. Run full research for a deeper thesis.`
               : 'Insufficient market data for analysis.')}
         </p>
+
+        {factors.length > 0 ? (
+          <div className="mb-4 grid gap-3 sm:grid-cols-2">
+            {factors.map((f) => (
+              <div key={f.label}>
+                <div className="mb-1 flex items-center justify-between text-xs">
+                  <span className="label-sm">{f.label}</span>
+                  <span className="num font-semibold text-ink-2">{f.score}</span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-surface-2">
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${f.score}%`, backgroundColor: f.color, boxShadow: `0 0 10px ${f.color}` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
         <Link
           href={`/research?symbol=${symbol}`}
           className="inline-flex items-center gap-2 text-sm font-semibold text-ink underline-offset-4 hover:underline"
@@ -291,7 +356,7 @@ export default function StockChartSection({
           Run full AI research on {symbol}
           <ExternalLink className="size-3.5" strokeWidth={1.5} />
         </Link>
-      </div>
+      </SpotlightCard>
     </div>
   );
 }

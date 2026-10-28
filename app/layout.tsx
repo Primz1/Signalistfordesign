@@ -4,6 +4,7 @@ import "@/app/globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { SmoothScrollProvider } from "@/components/motion/SmoothScrollProvider";
 
 const plexSans = IBM_Plex_Sans({
   variable: "--font-plex-sans",
@@ -36,8 +37,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F3F1EB" },
-    { media: "(prefers-color-scheme: dark)", color: "#141311" },
+    { media: "(prefers-color-scheme: light)", color: "#F4F3EC" },
+    { media: "(prefers-color-scheme: dark)", color: "#050811" },
   ],
 };
 
@@ -51,7 +52,7 @@ export default function RootLayout({
       <body className="font-sans text-base antialiased">
         <ThemeProvider>
           <PostHogProvider>
-            {children}
+            <SmoothScrollProvider>{children}</SmoothScrollProvider>
           </PostHogProvider>
           <Toaster />
         </ThemeProvider>

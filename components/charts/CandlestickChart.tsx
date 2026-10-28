@@ -9,7 +9,9 @@ import {
   LineSeries,
   CrosshairMode,
   LineStyle,
+  type CandlestickData,
   type IChartApi,
+  type ISeriesApi,
   type Time,
 } from 'lightweight-charts';
 import type { Candle } from '@/lib/market/ohlcv';
@@ -71,11 +73,34 @@ export default function CandlestickChart({
   const chartRef = useRef<IChartApi | null>(null);
   const [themeTick, setThemeTick] = useState(0);
 
+  const lastCandle = data.candles[data.candles.length - 1];
+  const [hud, setHud] = useState<{
+    time: number;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume?: number;
+  } | null>(
+    lastCandle
+      ? { time: lastCandle.time, open: lastCandle.open, high: lastCandle.high, low: lastCandle.low, close: lastCandle.close, volume: lastCandle.volume }
+      : null
+  );
+
   useEffect(() => {
     const obs = new MutationObserver(() => setThemeTick((n) => n + 1));
     obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     return () => obs.disconnect();
   }, []);
+
+  useEffect(() => {
+    const last = data.candles[data.candles.length - 1];
+    setHud(
+      last
+        ? { time: last.time, open: last.open, high: last.high, low: last.low, close: last.close, volume: last.volume }
+        : null
+    );
+  }, [data.candles]);
 
   const showSma20 = !!overlays.SMA20;
   const showSma50 = !!overlays.SMA50;
@@ -88,8 +113,13 @@ export default function CandlestickChart({
 
     const paneCount = 1 + (showRsi ? 1 : 0) + (showMacd ? 1 : 0);
     const PALETTE = readPalette();
-    const mix = (color: string, amount: number) =>
-      `color-mix(in srgb, ${color} ${Math.round(amount * 100)}%, transparent)`;
+    const mix = (color: string, amount: number) => {
+      const m = color.trim().match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+      if (m) {
+        return `rgba(${parseInt(m[1], 16)}, ${parseInt(m[2], 16)}, ${parseInt(m[3], 16)}, ${amount.toFixed(2)})`;
+      }
+      return color;
+    };
     const chart = createChart(containerRef.current, {
       height,
       layout: {
@@ -142,6 +172,8 @@ export default function CandlestickChart({
       borderVisible: false,
       wickUpColor: PALETTE.up,
       wickDownColor: PALETTE.down,
+      priceLineColor: PALETTE.signal,
+      priceLineWidth: 1,
     });
 
     candleSeries.setData(
@@ -153,6 +185,31 @@ export default function CandlestickChart({
         close: c.close,
       }))
     );
+
+    const volumeByTime = new Map(data.candles.map((c) => [c.time, c.volume]));
+
+    chart.subscribeCrosshairMove((param) => {
+      if (!param.time) {
+        const last = data.candles[data.candles.length - 1];
+        setHud(
+          last
+            ? { time: last.time, open: last.open, high: last.high, low: last.low, close: last.close, volume: last.volume }
+            : null
+        );
+        return;
+      }
+      const point = param.seriesData.get(candleSeries as unknown as ISeriesApi<'Candlestick'>) as CandlestickData | undefined;
+      if (!point) return;
+      const time = param.time as unknown as number;
+      setHud({
+        time,
+        open: point.open,
+        high: point.high,
+        low: point.low,
+        close: point.close,
+        volume: volumeByTime.get(time),
+      });
+    });
 
     const volumeSeries = chart.addSeries(HistogramSeries, {
       color: PALETTE.ink3,
@@ -175,7 +232,7 @@ export default function CandlestickChart({
 
     if (showSma20 && series?.sma20) {
       const s = chart.addSeries(LineSeries, {
-        color: PALETTE.signal,
+        color: PALETTE.cyan,
         lineWidth: 2,
         priceLineVisible: false,
         lastValueVisible: false,
@@ -185,7 +242,7 @@ export default function CandlestickChart({
 
     if (showSma50 && series?.sma50) {
       const s = chart.addSeries(LineSeries, {
-        color: PALETTE.ink2,
+        color: PALETTE.violet,
         lineWidth: 1,
         priceLineVisible: false,
         lastValueVisible: false,
@@ -195,21 +252,21 @@ export default function CandlestickChart({
 
     if (showBb && series?.bollinger) {
       const upper = chart.addSeries(LineSeries, {
-        color: mix(PALETTE.signal, 0.55),
+        color: mix(PALETTE.cobalt, 0.65),
         lineWidth: 1,
         lineStyle: 2,
         priceLineVisible: false,
         lastValueVisible: false,
       });
       const lower = chart.addSeries(LineSeries, {
-        color: mix(PALETTE.signal, 0.55),
+        color: mix(PALETTE.cobalt, 0.65),
         lineWidth: 1,
         lineStyle: 2,
         priceLineVisible: false,
         lastValueVisible: false,
       });
       const mid = chart.addSeries(LineSeries, {
-        color: mix(PALETTE.ink3, 0.7),
+        color: mix(PALETTE.cobalt, 0.4),
         lineWidth: 1,
         priceLineVisible: false,
         lastValueVisible: false,
@@ -347,5 +404,31 @@ export default function CandlestickChart({
     );
   }
 
-  return <div ref={containerRef} className={cn('w-full', className)} />;
+  const hudUp = hud != null && hud.close >= hud.open;
+
+  return (
+    <div className="relative">
+      {hud ? (
+        <div className="num pointer-events-none absolute left-2 top-2 z-10 flex flex-wrap items-center gap-x-3 gap-y-0.5 rounded-lg border border-[var(--sg-border-specular)] bg-[var(--sg-glass)] px-2.5 py-1.5 text-[11px] backdrop-blur-xl">
+          <span className="text-ink-3">O <span className="text-ink">{hud.open.toFixed(2)}</span></span>
+          <span className="text-ink-3">H <span className="text-ink">{hud.high.toFixed(2)}</span></span>
+          <span className="text-ink-3">L <span className="text-ink">{hud.low.toFixed(2)}</span></span>
+          <span className="text-ink-3">
+            C <span className={hudUp ? 'text-up' : 'text-down'}>{hud.close.toFixed(2)}</span>
+          </span>
+          {hud.volume != null ? (
+            <span className="text-ink-3">Vol <span className="text-ink-2">{formatHudVolume(hud.volume)}</span></span>
+          ) : null}
+        </div>
+      ) : null}
+      <div ref={containerRef} className={cn('w-full', className)} />
+    </div>
+  );
+}
+
+function formatHudVolume(n: number) {
+  if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B`;
+  if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
+  return String(Math.round(n));
 }

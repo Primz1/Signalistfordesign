@@ -11,6 +11,8 @@ import { BellPlus, Star } from "lucide-react";
 import Link from "next/link";
 import { EmptyState as SignalistEmptyState } from "@/components/ui/empty-state";
 import { formatMarketCapValue } from "@/lib/utils";
+import { Sparkline } from "@/components/charts/Sparkline";
+import { deterministicSeries } from "@/lib/charts/deterministic-series";
 
 type WatchlistEntry = {
 	_id?: string;
@@ -96,13 +98,14 @@ const WatchlistTable = ({ items, onAddAlert }: WatchlistTableProps) => {
 			<div className="surface-card">
 				<Table className="table-fixed">
 					<TableHeader>
-						<TableRow className="border-b border-line hover:bg-transparent">
+						<TableRow className="border-b border-[var(--sg-border-specular)] hover:bg-transparent">
 							<TableHead className="w-12"><span className="sr-only">Remove</span></TableHead>
 							<TableHead>Symbol</TableHead>
 							<TableHead className="text-right">Price</TableHead>
 							<TableHead className="text-right">Today</TableHead>
+							<TableHead className="hidden text-right md:table-cell">7D trend</TableHead>
 							<TableHead className="hidden text-right lg:table-cell">Market cap</TableHead>
-							<TableHead className="hidden text-right md:table-cell">Day range</TableHead>
+							<TableHead className="hidden text-right lg:table-cell">Day range</TableHead>
 							<TableHead className="hidden text-right sm:table-cell">AI score</TableHead>
 							<TableHead className="hidden w-28 text-right sm:table-cell"><span className="sr-only">Alert</span></TableHead>
 						</TableRow>
@@ -110,8 +113,9 @@ const WatchlistTable = ({ items, onAddAlert }: WatchlistTableProps) => {
 					<TableBody>
 						{rows.map((row) => {
 							const ch = row.changePercent;
+							const up = typeof ch === 'number' ? ch >= 0 : true;
 							return (
-								<TableRow key={row.symbol} className="group h-12 hover:bg-surface-2">
+								<TableRow key={row.symbol} className="group h-12 hover:bg-[var(--sg-glass-hover)]">
 									<TableCell className="w-12 py-0 pr-0 pl-1">
 										<button
 											onClick={() => handleRemove(row.symbol, row.company)}
@@ -129,29 +133,60 @@ const WatchlistTable = ({ items, onAddAlert }: WatchlistTableProps) => {
 										</Link>
 									</TableCell>
 									<TableCell className="num py-0 text-right text-sm text-ink">{formatCurrency(row.price)}</TableCell>
-									<TableCell
-										className={clsx(
-											'num py-0 text-right text-sm',
-											typeof ch === 'number' ? (ch >= 0 ? 'text-up' : 'text-down') : 'text-ink-3'
+									<TableCell className="py-0 text-right">
+										{typeof ch === 'number' ? (
+											<span
+												className={clsx(
+													'num inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold',
+													ch >= 0 ? 'bg-up/15 text-up' : 'bg-down/15 text-down'
+												)}
+											>
+												{ch >= 0 ? '+' : '−'}{Math.abs(ch).toFixed(2)}%
+											</span>
+										) : (
+											<span className="num text-sm text-ink-3">—</span>
 										)}
-									>
-										{typeof ch === 'number' ? `${ch >= 0 ? '+' : '−'}${Math.abs(ch).toFixed(2)}%` : '—'}
+									</TableCell>
+									<TableCell className="hidden py-0 text-right md:table-cell">
+										{row.price != null ? (
+											<Sparkline
+												id={`watchlist-${row.symbol}`}
+												values={deterministicSeries(row.symbol, 7, row.price, ch ?? 0)}
+												color={up ? 'var(--sg-up)' : 'var(--sg-down)'}
+												width={88}
+												height={28}
+												className="ml-auto h-7 w-[88px]"
+											/>
+										) : (
+											<span className="text-ink-3">—</span>
+										)}
 									</TableCell>
 									<TableCell className="num hidden py-0 text-right text-sm text-ink lg:table-cell">
 										{row.marketCap != null ? formatMarketCapValue(row.marketCap * 1_000_000) : '—'}
 									</TableCell>
-									<TableCell className="num hidden py-0 text-right text-sm text-ink-2 md:table-cell">
+									<TableCell className="num hidden py-0 text-right text-sm text-ink-2 lg:table-cell">
 										{row.dayLow != null && row.dayHigh != null
 											? `${formatPrice(row.dayLow)} – ${formatPrice(row.dayHigh)}`
 											: '—'}
 									</TableCell>
-									<TableCell className="num hidden py-0 text-right text-sm sm:table-cell">
+									<TableCell className="hidden py-0 text-right sm:table-cell">
 										{row.aiScore != null ? (
-											<span className={row.aiScore >= 65 ? 'text-up' : row.aiScore >= 45 ? 'text-ink' : 'text-down'}>
-												{Math.round(row.aiScore)}
-											</span>
+											<div className="inline-flex flex-col items-end gap-1">
+												<span className={clsx('num text-sm font-semibold', row.aiScore >= 65 ? 'text-up' : row.aiScore >= 45 ? 'text-ink' : 'text-down')}>
+													{Math.round(row.aiScore)}
+												</span>
+												<div className="h-1 w-14 overflow-hidden rounded-full bg-surface-2">
+													<div
+														className="h-full rounded-full"
+														style={{
+															width: `${Math.round(row.aiScore)}%`,
+															backgroundColor: row.aiScore >= 65 ? 'var(--sg-up)' : row.aiScore >= 45 ? 'var(--sg-cyan)' : 'var(--sg-down)',
+														}}
+													/>
+												</div>
+											</div>
 										) : (
-											<span className="text-ink-3">—</span>
+											<span className="num text-sm text-ink-3">—</span>
 										)}
 									</TableCell>
 									<TableCell className="hidden py-0 pr-2 text-right sm:table-cell">

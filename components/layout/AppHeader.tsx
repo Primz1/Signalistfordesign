@@ -10,6 +10,7 @@ import UserDropdown from '@/components/layout/UserDropdown';
 import { SearchCommand } from '@/components/search/SearchCommand';
 import { markNotifications } from '@/lib/actions/alertNotification.actions';
 import { useSafeTriangle } from '@/components/ui/use-safe-triangle';
+import { MarketStatus } from '@/components/terminal/MarketStatus';
 
 type Notification = {
   _id?: string;
@@ -43,13 +44,15 @@ export default function AppHeader({
   };
 
   return (
-    <header className="app-bar sticky top-0 z-30 border-b border-line pt-[env(safe-area-inset-top)]">
+    <header className="app-bar sticky top-0 z-30 border-b border-[var(--sg-border-specular)] pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-4 px-4 md:gap-6 md:px-6">
         <BrandLogo />
 
         <nav aria-label="Primary" className="hidden h-16 md:block">
           <NavItems />
         </nav>
+
+        <MarketStatus className="hidden md:flex" />
 
         <div className="ml-auto flex flex-none items-center gap-1">
           <div className="hidden w-[260px] lg:block xl:w-[300px]">
@@ -128,9 +131,9 @@ export default function AppHeader({
                   onPointerUp={() => {
                     swipe.current = null;
                   }}
-                  className="animate-toast absolute right-0 top-12 z-30 w-[min(22rem,calc(100vw-2rem))] touch-pan-y overflow-hidden rounded-lg border border-line-strong bg-surface shadow-none"
+                  className="surface-card animate-toast absolute right-0 top-12 z-30 w-[min(22rem,calc(100vw-2rem))] touch-pan-y !rounded-[18px]"
                 >
-                  <div className="flex items-center justify-between border-b border-line px-4 py-3">
+                  <div className="flex items-center justify-between border-b border-[var(--sg-border-specular)] px-4 py-3">
                     <div className="text-[14px] font-semibold text-ink">Alerts fired</div>
                     {unread > 0 && (
                       <button
@@ -155,11 +158,11 @@ export default function AppHeader({
                       notifications.slice(0, 8).map((n) => (
                         <div
                           key={n._id || `${n.symbol}-${n.triggeredAt}`}
-                          className="flex gap-3 border-b border-line px-4 py-3 last:border-0"
+                          className="flex gap-3 border-b border-[var(--sg-border-specular)] px-4 py-3 last:border-0 hover:bg-[var(--sg-glass-hover)]"
                         >
                           <span
                             aria-hidden
-                            className={`mt-1.5 size-1.5 flex-none rounded-full ${n.read ? 'bg-transparent' : 'bg-signal'}`}
+                            className={`mt-1.5 size-1.5 flex-none rounded-full ${n.read ? 'bg-transparent' : 'bg-signal shadow-[0_0_8px_var(--sg-signal-glow)]'}`}
                           />
                           <div className="min-w-0">
                             <div className="text-[13px] leading-5 text-ink">
@@ -176,7 +179,7 @@ export default function AppHeader({
                   <Link
                     href="/watchlist"
                     onClick={() => setNotifOpen(false)}
-                    className="block border-t border-line px-4 py-3 text-sm font-semibold text-ink hover:bg-surface-2"
+                    className="block border-t border-[var(--sg-border-specular)] px-4 py-3 text-sm font-semibold text-ink hover:bg-[var(--sg-glass-hover)]"
                   >
                     Manage alerts
                   </Link>

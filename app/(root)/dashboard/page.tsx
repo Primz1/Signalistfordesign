@@ -13,6 +13,9 @@ import TradingViewWidget from '@/components/market/TradingViewWidget';
 import { PageEnter } from '@/components/ui/motion';
 import { getEconomicCalendarEvents } from '@/lib/actions/economic.actions';
 import { EconomicCalendar } from '@/components/ui/economic-calendar';
+import { SpotlightCard, CountUp } from '@/components/motion';
+import { Sparkline } from '@/components/charts/Sparkline';
+import { deterministicSeries } from '@/lib/charts/deterministic-series';
 import {
   HEATMAP_WIDGET_CONFIG,
   MARKET_DATA_WIDGET_CONFIG,
@@ -72,7 +75,7 @@ export default async function Home() {
   );
 
   const quoteSymbols = Array.from(
-    new Set([...TAPE_SYMBOLS, ...symbols, 'NVDA'].map((s) => s.toUpperCase()))
+    new Set([...TAPE_SYMBOLS, ...symbols, 'NVDA', 'SPY'].map((s) => s.toUpperCase()))
   );
 
   const quotes = await Promise.all(
@@ -88,6 +91,7 @@ export default async function Home() {
     })
   );
   const quoteMap = new Map(quotes.map((q) => [q.symbol, q]));
+  const spyChangePct = quoteMap.get('SPY')?.change ?? null;
 
   const tapeItems = quotes
     .filter((q) => q.price != null)
@@ -106,9 +110,30 @@ export default async function Home() {
   const dayPl = Number((portfolio as { dayPl?: number } | null)?.dayPl ?? 0);
   const dayPlPercent = Number((portfolio as { dayPlPercent?: number } | null)?.dayPlPercent ?? 0);
   const holdingsCount = (portfolio?.holdings as unknown[] | undefined)?.length ?? 0;
+  const invested = Math.max(0, totalValue - cash);
+  const investedPct = totalValue > 0 ? Math.round((invested / totalValue) * 100) : 0;
+  const cashPct = 100 - investedPct;
+
+  const scoreValues = Array.from(scoreMap.values());
+  const avgScore = scoreValues.length
+    ? Math.round(scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length)
+    : null;
+  const regimeLabel =
+    avgScore == null
+      ? 'Awaiting signals'
+      : avgScore >= 70
+        ? 'Bullish expansion'
+        : avgScore >= 55
+          ? 'Bullish'
+          : avgScore >= 45
+            ? 'Neutral'
+            : avgScore >= 30
+              ? 'Bearish'
+              : 'Bearish contraction';
 
   const heroHolding = (portfolio?.holdings as { symbol: string; price?: number }[] | undefined)?.[0];
   const heroSym = (heroHolding?.symbol || watchlist[0]?.symbol || 'NVDA').toUpperCase();
+  const heroQuote = quoteMap.get(heroSym);
 
   const typedReports = reports as {
     _id?: { toString(): string };
@@ -123,44 +148,121 @@ export default async function Home() {
     <PageEnter className="flex flex-col">
       <TickerTape items={tapeItems} />
 
-      <div className="flex flex-col gap-12">
-        {/* Account: the one number that matters, then what moved it */}
+      <div className="flex flex-col gap-10">
+        <div>
+          <p className="text-[15px] text-ink-2">
+            {greeting()}, {firstName}
+          </p>
+        </div>
+
+        {/* KPI Bento Strip */}
+        <section aria-label="Portfolio overview" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <SpotlightCard spotlightColor="lime" tilt className="p-5">
+            <p className="label-sm">Net liquidating value</p>
+            <CountUp
+              value={totalValue}
+              decimals={2}
+              prefix="$"
+              className="figure mt-2 block text-[30px] text-ink"
+            />
+            <span
+              className={`num mt-2 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+                dayPl > 0 ? 'bg-up/15 text-up' : dayPl < 0 ? 'bg-down/15 text-down' : 'bg-surface-2 text-ink-2'
+              }`}
+            >
+              {signed(dayPl)} ({signedPct(dayPlPercent)}) today
+            </span>
+            <p className={`num mt-1.5 text-xs ${plTotal > 0 ? 'text-up' : plTotal < 0 ? 'text-down' : 'text-ink-3'}`}>
+              {signed(plTotal)} ({signedPct(plPercent)}) all time
+            </p>
+            <div className="mt-4 h-10">
+              <Sparkline
+                id="kpi-netliq"
+                values={deterministicSeries('netliq', 8, totalValue, dayPlPercent)}
+                color="var(--sg-signal)"
+                width={200}
+                height={40}
+                className="h-10 w-full"
+              />
+            </div>
+          </SpotlightCard>
+
+          <SpotlightCard spotlightColor="cyan" tilt className="p-5">
+            <p className="label-sm">Session alpha · day P&amp;L</p>
+            <CountUp
+              value={dayPl}
+              decimals={2}
+              prefix={dayPl >= 0 ? '+$' : '-$'}
+              className="figure mt-2 block text-[30px] text-ink"
+            />
+            <p className="num mt-2 text-xs text-ink-2">
+              <span className={dayPlPercent >= 0 ? 'text-up' : 'text-down'}>{signedPct(dayPlPercent)}</span>{' '}
+              {spyChangePct != null ? (
+                <>
+                  vs SPY <span className="text-ink-3">{signedPct(spyChangePct)}</span>
+                </>
+              ) : (
+                <span className="text-ink-3">vs SPY —</span>
+              )}
+            </p>
+            <div className="mt-4 h-10">
+              <Sparkline
+                id="kpi-alpha"
+                values={deterministicSeries('alpha', 8, dayPlPercent || 0.1, dayPlPercent)}
+                color="var(--sg-cyan)"
+                width={200}
+                height={40}
+                className="h-10 w-full"
+              />
+            </div>
+          </SpotlightCard>
+
+          <SpotlightCard spotlightColor="cobalt" tilt className="p-5">
+            <p className="label-sm">Deployed capital &amp; cash</p>
+            <p className="num mt-2 text-[18px] font-semibold text-ink">{formatPrice(invested)} invested</p>
+            <p className="num text-xs text-ink-3">{formatPrice(cash)} cash</p>
+            <div className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-surface-2">
+              <span style={{ width: `${investedPct}%`, backgroundColor: 'var(--sg-cobalt)' }} title={`Invested ${investedPct}%`} />
+              <span style={{ width: `${cashPct}%`, backgroundColor: 'var(--sg-cyan)' }} title={`Cash ${cashPct}%`} />
+            </div>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-ink-3">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="size-1.5 rounded-full" style={{ backgroundColor: 'var(--sg-cobalt)' }} />
+                Invested {investedPct}%
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="size-1.5 rounded-full" style={{ backgroundColor: 'var(--sg-cyan)' }} />
+                Cash {cashPct}%
+              </span>
+              <span>· {holdingsCount} positions</span>
+            </div>
+          </SpotlightCard>
+
+          <SpotlightCard spotlightColor="violet" tilt className="p-5">
+            <p className="label-sm">AI regime conviction</p>
+            <p className="num mt-2 text-[30px] font-semibold text-violet">
+              {avgScore ?? '—'}
+              <span className="text-base font-normal text-ink-3">/100</span>
+            </p>
+            <p className="text-xs text-ink-2">{regimeLabel}</p>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-surface-2">
+              <div
+                className="h-full rounded-full bg-violet"
+                style={{ width: `${avgScore ?? 0}%`, boxShadow: avgScore ? '0 0 12px var(--sg-violet)' : undefined }}
+              />
+            </div>
+            <p className="num mt-2 text-[11px] text-ink-3">{scoreValues.length} active signals</p>
+          </SpotlightCard>
+        </section>
+
         <section
           aria-labelledby="account-heading"
           className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-12"
         >
           <div className="flex flex-col">
-            <p className="text-[15px] text-ink-2">
-              {greeting()}, {firstName}
-            </p>
-            <h1 id="account-heading" className="mt-5 label-sm">
+            <h1 id="account-heading" className="sr-only">
               Paper portfolio value
             </h1>
-            <div className="figure mt-1 text-[32px] text-ink md:text-[48px]">
-              {formatPrice(totalValue)}
-            </div>
-            <div className="num mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm">
-              <span className={dayPl > 0 ? 'text-up' : dayPl < 0 ? 'text-down' : 'text-ink-2'}>
-                {signed(dayPl)} ({signedPct(dayPlPercent)}) today
-              </span>
-              <span className={plTotal > 0 ? 'text-up' : plTotal < 0 ? 'text-down' : 'text-ink-2'}>
-                {signed(plTotal)} ({signedPct(plPercent)}) all time
-              </span>
-            </div>
-
-            <dl className="mt-8 grid grid-cols-3 gap-px overflow-hidden rounded-lg border border-line bg-line">
-              {[
-                { k: 'Cash', v: formatPrice(cash) },
-                { k: 'Invested', v: formatPrice(Math.max(0, totalValue - cash)) },
-                { k: 'Positions', v: String(holdingsCount) },
-              ].map((s) => (
-                <div key={s.k} className="bg-canvas px-4 py-3">
-                  <dt className="label-sm">{s.k}</dt>
-                  <dd className="num mt-1 truncate text-base text-ink">{s.v}</dd>
-                </div>
-              ))}
-            </dl>
-
             <div className="mt-6 flex flex-wrap gap-2">
               <SearchCommand
                 renderAs="button"
@@ -179,13 +281,18 @@ export default async function Home() {
             </div>
           </div>
 
-          <div className="surface-card flex min-h-[280px] flex-col">
-            <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
+          <SpotlightCard spotlightColor="cyan" className="flex min-h-[280px] flex-col">
+            <div className="flex items-center justify-between gap-3 border-b border-[var(--sg-border-specular)] px-4 py-3">
               <div className="flex min-w-0 items-baseline gap-2">
                 <span className="num text-sm font-semibold text-ink">{heroSym}</span>
                 <span className="truncate text-sm text-ink-3">
                   {heroHolding ? 'Largest position' : 'From your watchlist'} · 1 month
                 </span>
+                {heroQuote?.change != null ? (
+                  <span className={`num rounded-full px-2 py-0.5 text-xs font-semibold ${heroQuote.change >= 0 ? 'bg-up/15 text-up' : 'bg-down/15 text-down'}`}>
+                    {signedPct(heroQuote.change)}
+                  </span>
+                ) : null}
               </div>
               <Link
                 href={`/stocks/${heroSym}`}
@@ -201,7 +308,7 @@ export default async function Home() {
                 height={230}
               />
             </div>
-          </div>
+          </SpotlightCard>
         </section>
 
         {/* What to look at next: watchlist movers and the latest research */}
@@ -213,11 +320,11 @@ export default async function Home() {
                 Open watchlist
               </Link>
             </div>
-            <div className="surface-card">
+            <SpotlightCard spotlightColor="lime" className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-line text-left">
-                    {['Symbol', 'Price', 'Today', 'AI score'].map((h) => (
+                  <tr className="border-b border-[var(--sg-border-specular)] text-left">
+                    {['Symbol', 'Price', 'Today', '7D trend', 'AI score'].map((h) => (
                       <th
                         key={h}
                         scope="col"
@@ -231,7 +338,7 @@ export default async function Home() {
                 <tbody>
                   {watchlist.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-4 py-8">
+                      <td colSpan={5} className="px-4 py-8">
                         <p className="text-sm text-ink">No symbols yet.</p>
                         <p className="mt-1 text-sm text-ink-3">
                           Add a ticker with Add symbol and its price, move and AI score show up
@@ -244,8 +351,9 @@ export default async function Home() {
                       const sym = row.symbol.toUpperCase();
                       const q = quoteMap.get(sym);
                       const ch = q?.change ?? 0;
+                      const score = scoreMap.get(sym);
                       return (
-                        <tr key={sym} className="border-b border-line last:border-0 hover:bg-surface-2">
+                        <tr key={sym} className="border-b border-[var(--sg-border-specular)] last:border-0 hover:bg-[var(--sg-glass-hover)]">
                           <td className="px-4 py-3">
                             <Link href={`/stocks/${sym}`} className="flex min-w-0 items-baseline gap-2">
                               <span className="num shrink-0 font-semibold text-ink">{sym}</span>
@@ -255,11 +363,31 @@ export default async function Home() {
                           <td className="num px-4 py-3 text-right text-ink">
                             {q?.price != null ? formatPrice(q.price) : '—'}
                           </td>
-                          <td className={`num px-4 py-3 text-right ${q?.change == null ? 'text-ink-3' : ch >= 0 ? 'text-up' : 'text-down'}`}>
-                            {q?.change != null ? signedPct(ch) : '—'}
+                          <td className="px-4 py-3 text-right">
+                            {q?.change != null ? (
+                              <span className={`num inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${ch >= 0 ? 'bg-up/15 text-up' : 'bg-down/15 text-down'}`}>
+                                {signedPct(ch)}
+                              </span>
+                            ) : (
+                              <span className="num text-ink-3">—</span>
+                            )}
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <ScoreCell score={scoreMap.get(sym)} />
+                            {q?.price != null ? (
+                              <Sparkline
+                                id={`watch-${sym}`}
+                                values={deterministicSeries(sym, 7, q.price, ch)}
+                                color={ch >= 0 ? 'var(--sg-up)' : 'var(--sg-down)'}
+                                width={80}
+                                height={28}
+                                className="ml-auto h-7 w-20"
+                              />
+                            ) : (
+                              <span className="text-ink-3">—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <ScoreCell score={score} />
                           </td>
                         </tr>
                       );
@@ -267,7 +395,7 @@ export default async function Home() {
                   )}
                 </tbody>
               </table>
-            </div>
+            </SpotlightCard>
           </div>
 
           <div className="min-w-0">
@@ -277,9 +405,9 @@ export default async function Home() {
                 New report
               </Link>
             </div>
-            <div className="surface-card divide-y divide-line">
+            <SpotlightCard spotlightColor="violet" className="divide-y divide-[var(--sg-border-specular)]">
               {typedReports.length === 0 ? (
-                <Link href="/research" className="block px-4 py-4 hover:bg-surface-2">
+                <Link href="/research" className="block px-4 py-4 hover:bg-[var(--sg-glass-hover)]">
                   <div className="text-sm font-semibold text-ink">No reports yet</div>
                   <p className="mt-1 text-sm leading-normal text-ink-3">
                     Pick a symbol: Signalist computes the factors first, then writes a narrative
@@ -296,20 +424,23 @@ export default async function Home() {
                     <Link
                       key={key}
                       href={`/research?symbol=${r.symbol}`}
-                      className="block px-4 py-3 hover:bg-surface-2"
+                      className="block px-4 py-3 hover:bg-[var(--sg-glass-hover)]"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <span className="num text-sm font-semibold text-ink">{r.symbol}</span>
                         <span className="num text-xs text-ink-3">{conf}% confidence</span>
                       </div>
-                      <p className="mt-1 line-clamp-2 text-sm leading-normal text-ink-2">
+                      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-2">
+                        <div className="h-full rounded-full bg-violet" style={{ width: `${conf}%` }} />
+                      </div>
+                      <p className="mt-2 line-clamp-2 text-sm leading-normal text-ink-2">
                         {r.query || r.summary || 'Research report'}
                       </p>
                     </Link>
                   );
                 })
               )}
-            </div>
+            </SpotlightCard>
           </div>
         </section>
 
@@ -326,34 +457,34 @@ export default async function Home() {
             <span className="text-sm text-ink-3">Delayed data via TradingView</span>
           </div>
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-            <div className="surface-card min-h-[420px] p-2 xl:col-span-1">
+            <SpotlightCard spotlightColor="cobalt" className="min-h-[420px] p-2 xl:col-span-1">
               <TradingViewWidget
                 scriptUrl={`${scriptUrl}market-overview.js`}
                 config={MARKET_OVERVIEW_WIDGET_CONFIG}
                 height={400}
               />
-            </div>
-            <div className="surface-card min-h-[420px] p-2 xl:col-span-2">
+            </SpotlightCard>
+            <SpotlightCard spotlightColor="lime" className="min-h-[420px] p-2 xl:col-span-2">
               <TradingViewWidget
                 scriptUrl={`${scriptUrl}stock-heatmap.js`}
                 config={HEATMAP_WIDGET_CONFIG}
                 height={400}
               />
-            </div>
-            <div className="surface-card min-h-[420px] p-2 xl:col-span-1">
+            </SpotlightCard>
+            <SpotlightCard spotlightColor="violet" className="min-h-[420px] p-2 xl:col-span-1">
               <TradingViewWidget
                 scriptUrl={`${scriptUrl}timeline.js`}
                 config={TOP_STORIES_WIDGET_CONFIG}
                 height={400}
               />
-            </div>
-            <div className="surface-card min-h-[420px] p-2 xl:col-span-2">
+            </SpotlightCard>
+            <SpotlightCard spotlightColor="cyan" className="min-h-[420px] p-2 xl:col-span-2">
               <TradingViewWidget
                 scriptUrl={`${scriptUrl}market-quotes.js`}
                 config={MARKET_DATA_WIDGET_CONFIG}
                 height={400}
               />
-            </div>
+            </SpotlightCard>
           </div>
         </section>
       </div>
@@ -372,5 +503,13 @@ function signedPct(n: number) {
 function ScoreCell({ score }: { score?: number }) {
   if (score == null) return <span className="num text-ink-3">—</span>;
   const tone = score >= 65 ? 'text-up' : score >= 45 ? 'text-ink' : 'text-down';
-  return <span className={`num ${tone}`}>{Math.round(score)}</span>;
+  const barColor = score >= 65 ? 'var(--sg-up)' : score >= 45 ? 'var(--sg-cyan)' : 'var(--sg-down)';
+  return (
+    <div className="inline-flex flex-col items-end gap-1">
+      <span className={`num ${tone}`}>{Math.round(score)}</span>
+      <div className="h-1 w-14 overflow-hidden rounded-full bg-surface-2">
+        <div className="h-full rounded-full" style={{ width: `${Math.round(score)}%`, backgroundColor: barColor }} />
+      </div>
+    </div>
+  );
 }
