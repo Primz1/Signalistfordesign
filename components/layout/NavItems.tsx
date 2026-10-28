@@ -52,6 +52,7 @@ const NavItems = ({
               <li key={href}>
                 <Link
                   href={href}
+                  prefetch
                   aria-current={active ? 'page' : undefined}
                   className={cn(
                     'press flex h-16 items-center justify-center px-1 text-center text-xs leading-tight',
@@ -77,6 +78,7 @@ const NavItems = ({
           <li key={href} className="flex h-full items-center">
             <Link
               href={href}
+              prefetch
               aria-current={active ? 'page' : undefined}
               className={cn(
                 'inline-flex h-11 items-center whitespace-nowrap rounded-lg px-3 text-sm',

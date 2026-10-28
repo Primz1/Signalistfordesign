@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { Bell } from 'lucide-react';
 import BrandLogo from '@/components/layout/BrandLogo';
@@ -9,6 +9,7 @@ import ThemeToggle from '@/components/layout/ThemeToggle';
 import UserDropdown from '@/components/layout/UserDropdown';
 import { SearchCommand } from '@/components/search/SearchCommand';
 import { markNotifications } from '@/lib/actions/alertNotification.actions';
+import { useSafeTriangle } from '@/components/ui/use-safe-triangle';
 
 type Notification = {
   _id?: string;
@@ -31,6 +32,8 @@ export default function AppHeader({
 }) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  const safe = useSafeTriangle(notifOpen, () => setNotifOpen(false));
+  const swipe = useRef<{ y: number } | null>(null);
 
   const unread = notifications.filter((n) => !n.read).length;
 
@@ -40,7 +43,7 @@ export default function AppHeader({
   };
 
   return (
-    <header className="app-bar sticky top-0 z-30 border-b border-line">
+    <header className="app-bar sticky top-0 z-30 border-b border-line pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-4 px-4 md:gap-6 md:px-6">
         <BrandLogo />
 
@@ -71,11 +74,25 @@ export default function AppHeader({
 
           <div className="relative">
             <button
+              ref={(node) => {
+                safe.triggerRef.current = node;
+              }}
               type="button"
               aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
               aria-expanded={notifOpen}
               onClick={() => setNotifOpen((o) => !o)}
-              className="press relative flex size-11 items-center justify-center rounded-lg text-ink-2 hover:bg-surface-2 hover:text-ink"
+              onPointerEnter={(event) => {
+                if (event.pointerType === 'touch') return;
+                safe.clearTimer();
+                safe.notePoint({ x: event.clientX, y: event.clientY });
+                setNotifOpen(true);
+              }}
+              onPointerLeave={(event) => {
+                if (event.pointerType === 'touch') return;
+                safe.notePoint({ x: event.clientX, y: event.clientY });
+                safe.armClose();
+              }}
+              className="press hit-slop relative flex size-11 items-center justify-center rounded-lg text-ink-2 hover:bg-surface-2 hover:text-ink"
             >
               <Bell className="size-[18px]" strokeWidth={1.5} />
               {unread > 0 && (
@@ -93,7 +110,26 @@ export default function AppHeader({
                   className="fixed inset-0 z-20 cursor-default"
                   onClick={() => setNotifOpen(false)}
                 />
-                <div className="animate-toast absolute right-0 top-12 z-30 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-lg border border-line-strong bg-surface shadow-none">
+                <div
+                  ref={(node) => {
+                    safe.contentRef.current = node;
+                  }}
+                  onPointerEnter={() => safe.clearTimer()}
+                  onPointerDown={(event) => {
+                    swipe.current = { y: event.clientY };
+                  }}
+                  onPointerMove={(event) => {
+                    if (!swipe.current) return;
+                    if (event.clientY - swipe.current.y > 48) {
+                      swipe.current = null;
+                      setNotifOpen(false);
+                    }
+                  }}
+                  onPointerUp={() => {
+                    swipe.current = null;
+                  }}
+                  className="animate-toast absolute right-0 top-12 z-30 w-[min(22rem,calc(100vw-2rem))] touch-pan-y overflow-hidden rounded-lg border border-line-strong bg-surface shadow-none"
+                >
                   <div className="flex items-center justify-between border-b border-line px-4 py-3">
                     <div className="text-[14px] font-semibold text-ink">Alerts fired</div>
                     {unread > 0 && (

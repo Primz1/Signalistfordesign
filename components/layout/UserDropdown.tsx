@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useSafeTriangle } from '@/components/ui/use-safe-triangle';
 import { useRouter } from 'next/navigation';
 import { signOut } from '@/lib/actions/auth.actions';
 import Link from 'next/link';
@@ -16,6 +18,8 @@ import { userInitials } from './BrandLogo';
 const UserDropdown = ({ user }: { user: User }) => {
   const router = useRouter();
   const initials = userInitials(user.name);
+  const [open, setOpen] = useState(false);
+  const safe = useSafeTriangle(open, () => setOpen(false));
 
   const handleSignOut = async () => {
     await signOut();
@@ -23,18 +27,37 @@ const UserDropdown = ({ user }: { user: User }) => {
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <button
+          ref={(node) => {
+            safe.triggerRef.current = node;
+          }}
           aria-label="Account"
-          className="press flex size-11 items-center justify-center rounded-full border border-line-strong bg-surface-2 text-xs font-semibold text-ink hover:border-ink-3"
+          className="press hit-slop flex size-11 items-center justify-center rounded-full border border-line-strong bg-surface-2 text-xs font-semibold text-ink hover:border-ink-3"
+          onPointerEnter={(event) => {
+            if (event.pointerType === 'touch') return;
+            safe.clearTimer();
+            safe.notePoint({ x: event.clientX, y: event.clientY });
+            setOpen(true);
+          }}
+          onPointerLeave={(event) => {
+            if (event.pointerType === 'touch') return;
+            safe.notePoint({ x: event.clientX, y: event.clientY });
+            safe.armClose();
+          }}
         >
           {initials}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
+        ref={(node) => {
+          safe.contentRef.current = node;
+        }}
         align="end"
         className="w-[240px] overflow-hidden p-1 text-ink-2"
+        onPointerEnter={() => safe.clearTimer()}
+        onCloseAutoFocus={(event) => event.preventDefault()}
       >
         <DropdownMenuLabel className="px-3 py-2.5">
           <div className="text-[14px] font-medium text-ink">{user.name}</div>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2D Motion Template</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  :root {
+    --bg-main: #0a0a0f;
+    --text-main: #ffffff;
+    --accent: #6366f1;
+  }
+
+  body, html {
+    margin: 0; padding: 0;
+    width: 100vw; height: 100vh;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .canvas {
+    width: 100vw; height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .element {
+    /* Base style */
+    background: var(--accent);
+    padding: 2vmin 4vmin;
+    border-radius: 2vmin;
+    font-weight: 600;
+    font-size: 4vmin;
+
+    /* Animation timing setup */
+    --enter-delay: 0.5s;
+    --exit-delay: 4.0s;
+    
+    animation: 
+      enterAnim 0.8s var(--enter-delay) cubic-bezier(0.16, 1, 0.3, 1) both,
+      exitAnim 0.6s var(--exit-delay) cubic-bezier(0.36, 0, 0.64, 1) forwards;
+  }
+
+  /* 0% keyframe strictly handles invisible state to prevent early rendering */
+  @keyframes enterAnim {
+    0% { transform: translateY(5vmin) scale(0.9); clip-path: inset(100% 0 0 0); }
+    100% { transform: translateY(0) scale(1); clip-path: inset(-20% -20% -20% -20%); }
+  }
+
+  @keyframes exitAnim {
+    0% { transform: translateY(0) scale(1); clip-path: inset(-20% -20% -20% -20%); }
+    100% { transform: translateY(-5vmin) scale(0.9); clip-path: inset(0 0 100% 0); }
+  }
+</style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="element">Hello World</div>
+  </div>
+</body>
+</html>

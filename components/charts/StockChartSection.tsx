@@ -64,6 +64,7 @@ export default function StockChartSection({
   const [chartEpoch, setChartEpoch] = useState(0);
   const requestId = useRef(0);
   const [extras, setExtras] = useState<ExtraIndicators | null>(null);
+  const [logoReady, setLogoReady] = useState(false);
 
   useEffect(() => {
     setChartData(initial);
@@ -128,7 +129,11 @@ export default function StockChartSection({
               <img
                 src={logo}
                 alt=""
-                className="size-12 shrink-0 rounded-lg bg-surface-2 object-contain p-1"
+                onLoad={() => setLogoReady(true)}
+                className={cn(
+                  'size-12 shrink-0 rounded-lg bg-surface-2 object-contain p-1 transition-[filter] duration-150',
+                  logoReady ? 'blur-0' : 'blur-sm'
+                )}
               />
             ) : (
               <div className="num flex size-12 shrink-0 items-center justify-center rounded-lg bg-surface-3 text-sm font-semibold text-ink">
@@ -198,7 +203,7 @@ export default function StockChartSection({
       {/* Chart */}
       <div className="overflow-hidden rounded-lg border border-line bg-surface">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3">
-          <div className="flex flex-wrap gap-1 rounded-lg border border-line bg-canvas p-1" role="group" aria-label="Chart range">
+          <div className="concentric flex flex-wrap gap-1 border border-line bg-canvas p-1" role="group" aria-label="Chart range">
             {CHART_RANGES.map((r) => (
               <button
                 key={r}

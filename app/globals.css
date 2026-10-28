@@ -214,7 +214,8 @@
     text-wrap: balance;
     font-weight: 600;
   }
-  p {
+  p,
+  li {
     text-wrap: pretty;
   }
   a {
@@ -238,12 +239,26 @@
   table,
   td,
   th,
+  time,
   .mono,
   .figure,
   .num,
-  [data-num] {
+  .tabular,
+  [data-num],
+  [data-numeric] {
     font-variant-numeric: tabular-nums lining-nums;
     font-feature-settings: "tnum" 1, "lnum" 1;
+  }
+  .hit-slop {
+    position: relative;
+  }
+  .hit-slop::after {
+    content: "";
+    position: absolute;
+    inset: -8px;
+  }
+  .concentric {
+    border-radius: calc(8px + 4px);
   }
   ::-webkit-scrollbar {
     width: 8px;
@@ -516,6 +531,21 @@
   }
   .press:active {
     transform: none;
+  }
+}
+
+@view-transition {
+  navigation: auto;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 160ms;
+  animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
   }
 }
 

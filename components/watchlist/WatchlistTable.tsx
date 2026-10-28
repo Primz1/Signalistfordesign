@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { removeFromWatchlist } from "@/lib/actions/watchlist.actions";
+import { addToWatchlist, removeFromWatchlist } from "@/lib/actions/watchlist.actions";
 import { notify } from "@/lib/notify";
 import clsx from "clsx";
-import { BellPlus, Loader2, Star } from "lucide-react";
+import { BellPlus, Star } from "lucide-react";
 import Link from "next/link";
 import { EmptyState as SignalistEmptyState } from "@/components/ui/empty-state";
 import { formatMarketCapValue } from "@/lib/utils";
@@ -52,25 +53,39 @@ const formatPrice = (value?: number) => {
 
 const WatchlistTable = ({ items, onAddAlert }: WatchlistTableProps) => {
 	const [rows, setRows] = useState<WatchlistEntry[]>(items);
-	const [pendingSymbol, setPendingSymbol] = useState<string | null>(null);
-	const [isPending, startTransition] = useTransition();
+	const [, startTransition] = useTransition();
+	const generation = useRef(0);
 
 	useEffect(() => {
 		setRows(items);
 	}, [items]);
 
-	const handleRemove = (symbol: string) => {
-		setPendingSymbol(symbol);
+	const handleRemove = (symbol: string, company: string) => {
+		const snapshot = rows;
+		const key = crypto.randomUUID();
+		const id = ++generation.current;
+		setRows((prev) => prev.filter((row) => row.symbol !== symbol));
+		const request = removeFromWatchlist(symbol, key);
+		toast(`${symbol} removed from watchlist`, {
+			action: {
+				label: "Undo",
+				onClick: () => {
+					if (generation.current !== id) return;
+					generation.current += 1;
+					setRows(snapshot);
+					void request.then((res) => {
+						if (res.success) void addToWatchlist(symbol, company, crypto.randomUUID());
+					});
+				},
+			},
+		});
 		startTransition(async () => {
-			const res = await removeFromWatchlist(symbol);
+			const res = await request;
+			if (generation.current !== id) return;
 			if (!res.success) {
+				setRows(snapshot);
 				notify.watchlistFailed("remove", res.message);
-				setPendingSymbol(null);
-				return;
 			}
-			setRows((prev) => prev.filter((row) => row.symbol !== symbol));
-			setPendingSymbol(null);
-			notify.watchlistRemoved(symbol);
 		});
 	};
 
@@ -94,20 +109,17 @@ const WatchlistTable = ({ items, onAddAlert }: WatchlistTableProps) => {
 					</TableHeader>
 					<TableBody>
 						{rows.map((row) => {
-							const busy = isPending && pendingSymbol === row.symbol;
 							const ch = row.changePercent;
 							return (
 								<TableRow key={row.symbol} className="group h-12 hover:bg-surface-2">
 									<TableCell className="w-12 py-0 pr-0 pl-1">
 										<button
-											onClick={() => handleRemove(row.symbol)}
-											disabled={busy}
-											aria-busy={busy}
+											onClick={() => handleRemove(row.symbol, row.company)}
 											aria-label={`Remove ${row.symbol} from watchlist`}
-											className="press inline-flex size-11 items-center justify-center rounded-lg text-ink-3 hover:bg-surface-3 hover:text-ink disabled:opacity-60"
+											className="press hit-slop inline-flex size-11 items-center justify-center rounded-lg text-ink-3 hover:bg-surface-3 hover:text-ink"
 											title="Remove from watchlist"
 										>
-											{busy ? <Loader2 className="size-4 animate-spin" /> : <Star className="size-4 fill-current" />}
+											<Star className="size-4 fill-current" />
 										</button>
 									</TableCell>
 									<TableCell className="max-w-0 py-0">
@@ -155,7 +167,7 @@ const WatchlistTable = ({ items, onAddAlert }: WatchlistTableProps) => {
 				</Table>
 			</div>
 		);
-	}, [rows, isPending, pendingSymbol]);
+	}, [rows]);
 
 	return content;
 };

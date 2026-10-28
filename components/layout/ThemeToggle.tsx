@@ -17,8 +17,18 @@ export default function ThemeToggle() {
     <button
       type="button"
       aria-label={dark ? 'Use light mode' : 'Use dark mode'}
-      onClick={() => setTheme(dark ? 'light' : 'dark')}
-      className="press flex size-11 items-center justify-center rounded-lg text-ink-2 hover:bg-surface-2 hover:text-ink"
+      onClick={() => {
+        const next = dark ? 'light' : 'dark';
+        const apply = () => setTheme(next);
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const start = (document as Document & { startViewTransition?: (callback: () => void) => void }).startViewTransition;
+        if (!reduced && start) {
+          start.call(document, apply);
+          return;
+        }
+        apply();
+      }}
+      className="press hit-slop flex size-11 items-center justify-center rounded-lg text-ink-2 hover:bg-surface-2 hover:text-ink"
     >
       {dark ? <Sun className="size-4" strokeWidth={1.5} /> : <Moon className="size-4" strokeWidth={1.5} />}
     </button>

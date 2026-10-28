@@ -312,7 +312,7 @@ function Api({ data }: { data: MarketingLiveData }) {
         <pre
           data-reveal
           style={{ '--i': 1 } as React.CSSProperties}
-          className="min-w-0 overflow-x-auto rounded-lg border border-line bg-surface p-4 font-mono text-sm leading-normal whitespace-pre-wrap text-ink-2 md:p-6"
+          className="max-w-full min-w-0 overflow-x-auto rounded-lg border border-line bg-surface p-4 font-mono text-sm leading-normal break-all whitespace-pre-wrap text-ink-2 md:p-6"
         >
           <code>
             <span className="text-ink-3">$ </span>
