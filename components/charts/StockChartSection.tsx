@@ -258,7 +258,7 @@ export default function StockChartSection({
                   onClick={() => toggleOverlay(key)}
                   aria-pressed={on}
                   className={cn(
-                    'press hit-slop h-8 border-b-2 text-xs font-semibold tracking-[0.04em]',
+                    'num press hit-slop h-8 border-b-2 text-sm font-medium',
                     on ? 'border-signal text-ink' : 'border-transparent text-ink-3 hover:text-ink-2'
                   )}
                 >

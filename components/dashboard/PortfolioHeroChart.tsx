@@ -13,6 +13,8 @@ const RANGE_DAYS: Record<ChartRangeKey, number> = { '1D': 1, '1W': 7, '1M': 30, 
 
 const CHART_W = 1000;
 const CHART_H = 320;
+/** Top headroom reserved above the highest point so the peak never clips. */
+const PAD_TOP = 24;
 
 /** Approximate calendar label for a point, walking back from "now" by range span. */
 function labelForIndex(range: ChartRangeKey, index: number, total: number) {
@@ -63,8 +65,9 @@ export function PortfolioHeroChart({
     const max = Math.max(...closes);
     const spread = max - min || 1;
     const stepX = CHART_W / (closes.length - 1 || 1);
+    const plotH = CHART_H - PAD_TOP;
     const line = monotonePath(
-      closes.map((v, i) => ({ x: i * stepX, y: CHART_H - ((v - min) / spread) * CHART_H }))
+      closes.map((v, i) => ({ x: i * stepX, y: PAD_TOP + plotH - ((v - min) / spread) * plotH }))
     );
     const area = `${line} L${CHART_W},${CHART_H} L0,${CHART_H} Z`;
     const changePct = ((closes[closes.length - 1] - closes[0]) / closes[0]) * 100;

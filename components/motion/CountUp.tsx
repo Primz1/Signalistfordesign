@@ -32,6 +32,11 @@ export function CountUp({ value, decimals = 0, prefix = '', suffix = '', duratio
     hasMounted.current = true;
     previousValue.current = value;
 
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setDisplay(value);
+      return;
+    }
+
     const obj = { val: from };
     tweenRef.current?.kill();
     tweenRef.current = gsap.to(obj, {

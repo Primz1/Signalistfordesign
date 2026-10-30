@@ -139,6 +139,7 @@ export default function CandlestickChart({
         borderColor: PALETTE.line,
         borderVisible: false,
         entireTextOnly: true,
+        scaleMargins: { top: 0.08, bottom: 0.1 },
       },
       timeScale: { borderColor: PALETTE.line, borderVisible: false },
       localization: {

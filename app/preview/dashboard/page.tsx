@@ -34,7 +34,7 @@ const RESEARCH = [
   },
 ];
 
-const POINTS_FOR: Record<ChartRangeKey, number> = { '1D': 24, '1W': 7, '1M': 30, '1Y': 24 };
+const POINTS_FOR: Record<ChartRangeKey, number> = { '1D': 60, '1W': 60, '1M': 60, '1Y': 60 };
 
 export default function PreviewDashboard() {
   const totalValue = 128_420.18;
@@ -93,10 +93,10 @@ export default function PreviewDashboard() {
 
           <PortfolioHeroChart seriesByRange={seriesByRange} className="-mt-4" />
 
-          <div className="grid grid-cols-3 gap-4 sm:flex sm:flex-wrap sm:gap-x-12 sm:gap-y-5">
-            <div className="min-w-0">
+          <div className="grid grid-cols-2 gap-4 sm:flex sm:flex-wrap sm:gap-x-12 sm:gap-y-5">
+            <div className="col-span-2 min-w-0 sm:col-span-1">
               <p className="meta truncate">Day P&amp;L</p>
-              <p className="num mt-1 truncate text-[17px] font-semibold text-ink sm:text-xl">
+              <p className="num mt-1 text-[17px] font-semibold text-ink sm:truncate sm:text-xl">
                 {formatSignedPrice(dayPl)}{' '}
                 <span className="text-sm font-medium text-up/80">+{dayPlPercent.toFixed(2)}%</span>
               </p>

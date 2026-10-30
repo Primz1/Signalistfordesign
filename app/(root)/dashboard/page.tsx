@@ -84,10 +84,10 @@ export default async function Home() {
     deterministicSeries(seed, length, totalValue, changePct).map((close, i) => ({ time: i, close }));
 
   const seriesByRange: Record<ChartRangeKey, ChartPoint[]> = {
-    '1D': toSeries('portfolio-1D', 48, dayPlPercent),
-    '1W': toSeries('portfolio-1W', 42, dayPlPercent * 2.2),
-    '1M': toSeries('portfolio-1M', 30, dayPlPercent * 5),
-    '1Y': toSeries('portfolio-1Y', 52, dayPlPercent * 14),
+    '1D': toSeries('portfolio-1D', 60, dayPlPercent),
+    '1W': toSeries('portfolio-1W', 60, dayPlPercent * 2.2),
+    '1M': toSeries('portfolio-1M', 60, dayPlPercent * 5),
+    '1Y': toSeries('portfolio-1Y', 60, dayPlPercent * 14),
   };
 
   const typedReports = reports as {
@@ -139,11 +139,12 @@ export default async function Home() {
 
           <PortfolioHeroChart seriesByRange={seriesByRange} className="-mt-4" />
 
-          <div className="grid grid-cols-3 gap-4 sm:flex sm:flex-wrap sm:gap-x-12 sm:gap-y-5">
+          <div className="grid grid-cols-2 gap-4 sm:flex sm:flex-wrap sm:gap-x-12 sm:gap-y-5">
             <StatPair
               label="Day P&L"
               value={`${signed(dayPl)} (${signedPct(dayPlPercent)})`}
               tone={dayPl > 0 ? 'up' : dayPl < 0 ? 'down' : 'neutral'}
+              full
             />
             <StatPair label="Cash" value={formatPrice(cash)} />
             <StatPair label="Invested" value={formatPrice(invested)} />
@@ -255,16 +256,22 @@ function StatPair({
   label,
   value,
   tone = 'neutral',
+  full = false,
 }: {
   label: string;
   value: string;
   tone?: 'up' | 'down' | 'neutral';
+  full?: boolean;
 }) {
   const color = tone === 'up' ? 'text-up' : tone === 'down' ? 'text-down' : 'text-ink';
   return (
-    <div className="min-w-0">
+    <div className={`min-w-0 ${full ? 'col-span-2 sm:col-span-1' : ''}`}>
       <p className="meta truncate">{label}</p>
-      <p className={`num mt-1 truncate text-[17px] font-semibold sm:text-xl ${color}`}>{value}</p>
+      <p
+        className={`num mt-1 text-[17px] font-semibold sm:truncate sm:text-xl ${full ? '' : 'truncate'} ${color}`}
+      >
+        {value}
+      </p>
     </div>
   );
 }

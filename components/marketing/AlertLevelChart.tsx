@@ -65,12 +65,21 @@ export function AlertLevelChart({
   const [dragging, setDragging] = useState(false);
   const [ready, setReady] = useState(false);
 
-  const { lo, hi, step, initial, lastClose, closes } = useMemo(() => {
+  const { lo, hi, step, initial, lastClose, closes, smoothedCloses } = useMemo(() => {
     const lows = candles.map((c) => c.low);
     const highs = candles.map((c) => c.high);
     const lo = Math.min(...lows);
     const hi = Math.max(...highs);
     const closes = candles.map((c) => c.close);
+    // 3-session moving average for the plotted line only — keeps the shape
+    // calm and legible while touches/markers still use the raw candles.
+    const smoothedCloses = closes.map((_, i) => {
+      const from = Math.max(0, i - 1);
+      const to = Math.min(closes.length - 1, i + 1);
+      let sum = 0;
+      for (let j = from; j <= to; j++) sum += closes[j];
+      return sum / (to - from + 1);
+    });
     const recent = closes.slice(-60).slice().sort((a, b) => a - b);
     const median = recent[Math.floor(recent.length / 2)] ?? (lo + hi) / 2;
     const step = niceStep(median);
@@ -81,6 +90,7 @@ export function AlertLevelChart({
       initial: Math.round(median / step) * step,
       lastClose: closes[closes.length - 1] ?? median,
       closes,
+      smoothedCloses,
     };
   }, [candles]);
 
@@ -100,8 +110,8 @@ export function AlertLevelChart({
   const stepX = W / (n - 1 || 1);
 
   const linePath = useMemo(
-    () => monotonePath(closes.map((c, i) => ({ x: i * stepX, y: y(c) }))),
-    [closes, stepX, y]
+    () => monotonePath(smoothedCloses.map((c, i) => ({ x: i * stepX, y: y(c) }))),
+    [smoothedCloses, stepX, y]
   );
   const areaPath = `${linePath} L${(n - 1) * stepX},${H} L0,${H} Z`;
 
@@ -177,7 +187,7 @@ export function AlertLevelChart({
     <figure className={cn('@container w-full', className)}>
       <figcaption className="flex flex-col gap-4 @3xl:flex-row @3xl:items-end @3xl:justify-between">
         <div>
-          <div className="text-base text-ink-2">
+          <div className="text-sm text-ink-2">
             <span className="num font-semibold text-ink">{symbol}</span> · daily closes, last{' '}
             {sessions} sessions
           </div>
@@ -191,7 +201,7 @@ export function AlertLevelChart({
       <div
         ref={plotRef}
         className={cn(
-          'relative mt-6 h-[260px] touch-none select-none md:h-[380px]',
+          'relative mt-6 h-[240px] touch-none select-none md:h-[420px]',
           dragging ? 'cursor-grabbing' : 'cursor-ns-resize'
         )}
         onPointerDown={(e) => {
@@ -207,6 +217,12 @@ export function AlertLevelChart({
           viewBox={`0 0 ${W} ${H}`}
           preserveAspectRatio="none"
           className="absolute inset-y-0 left-0 h-full w-[calc(100%-5.5rem)]"
+          style={{
+            maskImage:
+              'linear-gradient(to right, transparent 0, black 32px, black calc(100% - 32px), transparent 100%)',
+            WebkitMaskImage:
+              'linear-gradient(to right, transparent 0, black 32px, black calc(100% - 32px), transparent 100%)',
+          }}
           role="img"
           aria-label={`${symbol} daily close price, ${sessions} sessions, ranging from ${fmt(lo, step)} to ${fmt(hi, step)}`}
         >
