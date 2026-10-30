@@ -97,16 +97,14 @@ const WatchlistButton = ({
     ? "press inline-flex h-11 w-auto items-center gap-2 rounded-lg border border-down bg-transparent px-4 text-sm font-semibold text-down hover:bg-down/8"
     : "press inline-flex h-11 w-auto items-center gap-2 rounded-lg border border-line-strong bg-transparent px-4 text-sm font-semibold text-ink hover:bg-surface-2";
 
+  const textClass = "text-btn gap-2 px-0";
+
+  const className =
+    variant === "outline" ? outlineClass : variant === "text" ? textClass : `watchlist-btn ${added ? "watchlist-remove" : ""}`;
+
   return (
-    <button
-      className={
-        variant === "outline"
-          ? outlineClass
-          : `watchlist-btn ${added ? "watchlist-remove" : ""}`
-      }
-      onClick={handleClick}
-    >
-      {(showTrashIcon || variant === "outline") && added ? (
+    <button className={className} onClick={handleClick}>
+      {(showTrashIcon || variant === "outline" || variant === "text") && added ? (
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"

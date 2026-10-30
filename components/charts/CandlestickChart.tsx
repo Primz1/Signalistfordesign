@@ -9,9 +9,7 @@ import {
   LineSeries,
   CrosshairMode,
   LineStyle,
-  type CandlestickData,
   type IChartApi,
-  type ISeriesApi,
   type Time,
 } from 'lightweight-charts';
 import type { Candle } from '@/lib/market/ohlcv';
@@ -73,34 +71,11 @@ export default function CandlestickChart({
   const chartRef = useRef<IChartApi | null>(null);
   const [themeTick, setThemeTick] = useState(0);
 
-  const lastCandle = data.candles[data.candles.length - 1];
-  const [hud, setHud] = useState<{
-    time: number;
-    open: number;
-    high: number;
-    low: number;
-    close: number;
-    volume?: number;
-  } | null>(
-    lastCandle
-      ? { time: lastCandle.time, open: lastCandle.open, high: lastCandle.high, low: lastCandle.low, close: lastCandle.close, volume: lastCandle.volume }
-      : null
-  );
-
   useEffect(() => {
     const obs = new MutationObserver(() => setThemeTick((n) => n + 1));
     obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     return () => obs.disconnect();
   }, []);
-
-  useEffect(() => {
-    const last = data.candles[data.candles.length - 1];
-    setHud(
-      last
-        ? { time: last.time, open: last.open, high: last.high, low: last.low, close: last.close, volume: last.volume }
-        : null
-    );
-  }, [data.candles]);
 
   const showSma20 = !!overlays.SMA20;
   const showSma50 = !!overlays.SMA50;
@@ -123,7 +98,7 @@ export default function CandlestickChart({
     const chart = createChart(containerRef.current, {
       height,
       layout: {
-        background: { type: ColorType.Solid, color: PALETTE.surface },
+        background: { type: ColorType.Solid, color: PALETTE.canvas },
         textColor: PALETTE.ink3,
         fontFamily: '"IBM Plex Mono", ui-monospace, monospace',
         fontSize: 12,
@@ -135,7 +110,7 @@ export default function CandlestickChart({
       },
       grid: {
         vertLines: { visible: false },
-        horzLines: { color: PALETTE.line, style: LineStyle.Solid },
+        horzLines: { color: mix(PALETTE.ink, 0.04), style: LineStyle.Solid },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
@@ -186,35 +161,12 @@ export default function CandlestickChart({
       }))
     );
 
-    const volumeByTime = new Map(data.candles.map((c) => [c.time, c.volume]));
-
-    chart.subscribeCrosshairMove((param) => {
-      if (!param.time) {
-        const last = data.candles[data.candles.length - 1];
-        setHud(
-          last
-            ? { time: last.time, open: last.open, high: last.high, low: last.low, close: last.close, volume: last.volume }
-            : null
-        );
-        return;
-      }
-      const point = param.seriesData.get(candleSeries as unknown as ISeriesApi<'Candlestick'>) as CandlestickData | undefined;
-      if (!point) return;
-      const time = param.time as unknown as number;
-      setHud({
-        time,
-        open: point.open,
-        high: point.high,
-        low: point.low,
-        close: point.close,
-        volume: volumeByTime.get(time),
-      });
-    });
-
     const volumeSeries = chart.addSeries(HistogramSeries, {
       color: PALETTE.ink3,
       priceFormat: { type: 'volume' },
       priceScaleId: 'volume',
+      priceLineVisible: false,
+      lastValueVisible: false,
     });
     chart.priceScale('volume').applyOptions({
       scaleMargins: { top: 0.78, bottom: 0 },
@@ -224,15 +176,16 @@ export default function CandlestickChart({
       data.candles.map((c) => ({
         time: c.time as unknown as Time,
         value: c.volume ?? 0,
-        color: c.close >= c.open ? mix(PALETTE.up, 0.35) : mix(PALETTE.down, 0.35),
+        color: c.close >= c.open ? mix(PALETTE.up, 0.25) : mix(PALETTE.down, 0.25),
       }))
     );
 
     const series = data.indicators?.series;
+    const mutedLine = mix(PALETTE.ink3, 0.6);
 
     if (showSma20 && series?.sma20) {
       const s = chart.addSeries(LineSeries, {
-        color: PALETTE.cyan,
+        color: mutedLine,
         lineWidth: 2,
         priceLineVisible: false,
         lastValueVisible: false,
@@ -242,7 +195,7 @@ export default function CandlestickChart({
 
     if (showSma50 && series?.sma50) {
       const s = chart.addSeries(LineSeries, {
-        color: PALETTE.violet,
+        color: mutedLine,
         lineWidth: 1,
         priceLineVisible: false,
         lastValueVisible: false,
@@ -252,21 +205,21 @@ export default function CandlestickChart({
 
     if (showBb && series?.bollinger) {
       const upper = chart.addSeries(LineSeries, {
-        color: mix(PALETTE.cobalt, 0.65),
+        color: mix(PALETTE.ink3, 0.5),
         lineWidth: 1,
         lineStyle: 2,
         priceLineVisible: false,
         lastValueVisible: false,
       });
       const lower = chart.addSeries(LineSeries, {
-        color: mix(PALETTE.cobalt, 0.65),
+        color: mix(PALETTE.ink3, 0.5),
         lineWidth: 1,
         lineStyle: 2,
         priceLineVisible: false,
         lastValueVisible: false,
       });
       const mid = chart.addSeries(LineSeries, {
-        color: mix(PALETTE.cobalt, 0.4),
+        color: mix(PALETTE.ink3, 0.3),
         lineWidth: 1,
         priceLineVisible: false,
         lastValueVisible: false,
@@ -404,31 +357,5 @@ export default function CandlestickChart({
     );
   }
 
-  const hudUp = hud != null && hud.close >= hud.open;
-
-  return (
-    <div className="relative">
-      {hud ? (
-        <div className="num pointer-events-none absolute left-2 top-2 z-10 flex flex-wrap items-center gap-x-3 gap-y-0.5 rounded-lg border border-[var(--sg-border-specular)] bg-[var(--sg-glass)] px-2.5 py-1.5 text-[11px] backdrop-blur-xl">
-          <span className="text-ink-3">O <span className="text-ink">{hud.open.toFixed(2)}</span></span>
-          <span className="text-ink-3">H <span className="text-ink">{hud.high.toFixed(2)}</span></span>
-          <span className="text-ink-3">L <span className="text-ink">{hud.low.toFixed(2)}</span></span>
-          <span className="text-ink-3">
-            C <span className={hudUp ? 'text-up' : 'text-down'}>{hud.close.toFixed(2)}</span>
-          </span>
-          {hud.volume != null ? (
-            <span className="text-ink-3">Vol <span className="text-ink-2">{formatHudVolume(hud.volume)}</span></span>
-          ) : null}
-        </div>
-      ) : null}
-      <div ref={containerRef} className={cn('w-full', className)} />
-    </div>
-  );
-}
-
-function formatHudVolume(n: number) {
-  if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B`;
-  if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
-  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
-  return String(Math.round(n));
+  return <div ref={containerRef} className={cn('relative w-full', className)} />;
 }

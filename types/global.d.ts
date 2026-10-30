@@ -116,7 +116,7 @@ declare global {
         isInWatchlist: boolean;
         showTrashIcon?: boolean;
         type?: 'button' | 'icon';
-        variant?: 'filled' | 'outline';
+        variant?: 'filled' | 'outline' | 'text';
         onWatchlistChange?: (symbol: string, isAdded: boolean) => void;
     };
 

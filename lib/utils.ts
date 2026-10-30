@@ -117,6 +117,13 @@ export const formatPrice = (price: number) => {
   }).format(price);
 };
 
+// Signed currency with grouping, e.g. "+$1,842.10" / "−$1,842.10" / "$0.00".
+export const formatSignedPrice = (value: number) => {
+  if (!value) return formatPrice(0);
+  const sign = value > 0 ? '+' : '−';
+  return `${sign}${formatPrice(Math.abs(value))}`;
+};
+
 export const formatDateToday = new Date().toLocaleDateString('en-US', {
   weekday: 'long',
   year: 'numeric',

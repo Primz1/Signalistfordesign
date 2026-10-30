@@ -4,14 +4,13 @@ import { useEffect, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { ExternalLink, Loader2 } from 'lucide-react';
 import CandlestickChart, { type IndicatorToggleKey } from './CandlestickChart';
-import { IndicatorGuide, type ExtraIndicators } from './IndicatorGuide';
-import SignalBadges from './SignalBadges';
+import { IndicatorGuide } from './IndicatorGuide';
 import WatchlistButton from '@/components/watchlist/WatchlistButton';
 import { getExtraIndicators } from '@/lib/actions/ai.actions';
 import { getChartData } from '@/lib/actions/market.actions';
 import { CHART_RANGES, type ChartRange } from '@/lib/market/ohlcv';
-import { cn } from '@/lib/utils';
-import { SpotlightCard, CountUp } from '@/components/motion';
+import { cn, formatPrice, formatSignedPrice } from '@/lib/utils';
+import type { ExtraIndicators } from './IndicatorGuide';
 
 type ChartPayload = Awaited<ReturnType<typeof getChartData>>;
 
@@ -36,17 +35,11 @@ function formatVol(n?: number) {
   return String(Math.round(n));
 }
 
-function initials(name: string, symbol: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return symbol.slice(0, 2).toUpperCase();
-}
-
 function clamp01to100(n: number) {
   return Math.max(0, Math.min(100, Math.round(n)));
 }
 
-type Factor = { label: string; score: number; color: string };
+type Factor = { label: string; score: number };
 
 /** Derives a 4-factor AI decomposition strip from the technical indicators already on hand. */
 function deriveFactors(
@@ -68,10 +61,10 @@ function deriveFactors(
   const conviction = extras?.adx != null ? clamp01to100(extras.adx) : clamp01to100(50 + Math.abs(trendSpread) * 4);
 
   return [
-    { label: 'Trend', score: trend, color: 'var(--sg-cobalt)' },
-    { label: 'Momentum', score: momentum, color: 'var(--sg-cyan)' },
-    { label: 'MACD impulse', score: macdScore, color: 'var(--sg-signal)' },
-    { label: 'Conviction', score: conviction, color: 'var(--sg-violet)' },
+    { label: 'Trend', score: trend },
+    { label: 'Momentum', score: momentum },
+    { label: 'MACD impulse', score: macdScore },
+    { label: 'Conviction', score: conviction },
   ];
 }
 
@@ -155,11 +148,11 @@ export default function StockChartSection({
   const factors = deriveFactors(chartData.indicators, extras);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-10">
       {/* Header */}
-      <SpotlightCard spotlightColor="cobalt" className="flex flex-col justify-between gap-4 p-5 md:flex-row md:items-start md:p-6">
-        <div>
-          <div className="mb-4 flex min-w-0 flex-wrap items-center gap-3">
+      <div className="flex flex-col justify-between gap-5 md:flex-row md:items-start">
+        <div className="min-w-0">
+          <div className="mb-4 flex min-w-0 items-center gap-3">
             {logo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -167,90 +160,72 @@ export default function StockChartSection({
                 alt=""
                 onLoad={() => setLogoReady(true)}
                 className={cn(
-                  'size-12 shrink-0 rounded-lg bg-surface-2 object-contain p-1 transition-[filter] duration-150',
+                  'size-10 shrink-0 rounded-lg bg-surface-2 object-contain p-1 transition-[filter] duration-150',
                   logoReady ? 'blur-0' : 'blur-sm'
                 )}
               />
-            ) : (
-              <div className="num flex size-12 shrink-0 items-center justify-center rounded-lg bg-surface-3 text-sm font-semibold text-ink">
-                {initials(company, symbol)}
-              </div>
-            )}
-            <h1 className="page-title min-w-0 break-words">{company}</h1>
-            <span className="num text-sm text-ink-2">({symbol})</span>
-            {exchange ? (
-              <span className="rounded-lg border border-line-strong px-2 py-1 text-xs text-ink-3">
-                {exchange.split(/[\s/-]/)[0] || exchange}
-              </span>
             ) : null}
+            <div className="min-w-0">
+              <h1 className="truncate text-xl font-semibold tracking-[-0.02em] text-ink">{company}</h1>
+              <div className="num text-sm text-ink-3">
+                {symbol}
+                {exchange ? ` · ${exchange.split(/[\s/-]/)[0] || exchange}` : ''}
+              </div>
+            </div>
           </div>
 
-          <div className="mb-3 flex flex-wrap items-baseline gap-3">
+          <div className="flex flex-wrap items-baseline gap-3">
             {price != null ? (
-              <CountUp value={price} decimals={2} prefix="$" className="figure block text-[32px] text-ink md:text-[48px]" />
+              <span className="num text-[56px] leading-none font-semibold tracking-[-0.03em] text-ink">
+                {formatPrice(price)}
+              </span>
             ) : null}
             {changePct != null ? (
-              <span
-                className={cn(
-                  'num rounded-full px-2.5 py-1 text-sm font-semibold',
-                  up ? 'bg-up/15 text-up' : 'bg-down/15 text-down'
-                )}
-              >
+              <span className={cn('num text-base font-medium', up ? 'text-up' : 'text-down')}>
                 {change != null
-                  ? `${up ? '+' : '−'}${Math.abs(change).toFixed(2)} (${up ? '+' : '−'}${Math.abs(changePct).toFixed(2)}% today)`
-                  : `${up ? '+' : '−'}${Math.abs(changePct).toFixed(2)}% today`}
+                  ? `${formatSignedPrice(change)} (${up ? '+' : '−'}${Math.abs(changePct).toFixed(2)}%)`
+                  : `${up ? '+' : '−'}${Math.abs(changePct).toFixed(2)}%`}
               </span>
             ) : null}
           </div>
 
-          <div className="flex flex-wrap gap-1.5">
+          <div className="num mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-3">
             {[
               ['O', open],
               ['H', high],
               ['L', low],
               ['C', close],
             ].map(([label, v]) => (
-              <span
-                key={label}
-                className="num concentric border border-[var(--sg-border-specular)] bg-[var(--sg-glass-hover)] px-2 py-1 text-xs text-ink-2"
-              >
-                <span className="text-ink-3">{label}</span> {v != null ? (v as number).toFixed(2) : '—'}
+              <span key={label}>
+                {label} <span className="text-ink-2">{v != null ? (v as number).toFixed(2) : '—'}</span>
               </span>
             ))}
-            <span className="num concentric border border-[var(--sg-border-specular)] bg-[var(--sg-glass-hover)] px-2 py-1 text-xs text-ink-2">
-              <span className="text-ink-3">Vol</span> {formatVol(vol)}
+            <span>
+              Vol <span className="text-ink-2">{formatVol(vol)}</span>
             </span>
+            {aiScore != null && Number.isFinite(aiScore) ? (
+              <span>
+                AI score <span className="text-ink-2">{Math.round(aiScore)}</span>
+              </span>
+            ) : null}
           </div>
         </div>
 
-        <div className="flex shrink-0 flex-col items-start gap-3 md:items-end">
-          {aiScore != null && Number.isFinite(aiScore) ? (
-            <span
-              className="num text-sm text-ink-2"
-            >
-              AI score{' '}
-              <span className={aiScore >= 60 ? 'text-up' : aiScore >= 40 ? 'text-ink' : 'text-down'}>
-                {Math.round(aiScore)}
-              </span>
-              <span className="text-ink-3">/100</span>
-            </span>
-          ) : null}
+        <div className="shrink-0">
           <WatchlistButton
             symbol={symbol}
             company={company}
             isInWatchlist={isInWatchlist}
-            variant="outline"
+            variant="text"
             showTrashIcon
           />
         </div>
-      </SpotlightCard>
-
-      <SignalBadges signals={chartData.signals} />
+      </div>
 
       {/* Chart */}
-      <SpotlightCard spotlightColor="cyan" className="overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--sg-border-specular)] px-4 py-3">
-          <div className="concentric flex flex-wrap gap-1 border border-line bg-canvas p-1" role="group" aria-label="Chart range">
+      <div>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
+          <div className="flex flex-wrap gap-4" role="group" aria-label="Chart range">
             {CHART_RANGES.map((r) => (
               <button
                 key={r}
@@ -258,10 +233,10 @@ export default function StockChartSection({
                 onClick={() => loadRange(r)}
                 aria-pressed={range === r}
                 className={cn(
-                  'num press h-11 rounded-lg px-3 text-sm',
+                  'num press hit-slop h-8 border-b-2 text-sm font-medium',
                   range === r
-                    ? 'bg-surface-2 font-semibold text-ink'
-                    : 'bg-transparent text-ink-2 hover:text-ink'
+                    ? 'border-signal text-ink'
+                    : 'border-transparent text-ink-3 hover:text-ink-2'
                 )}
               >
                 {r}
@@ -269,7 +244,7 @@ export default function StockChartSection({
             ))}
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-4">
             {TOGGLES.map((key) => {
               const on = overlays[key];
               return (
@@ -279,10 +254,8 @@ export default function StockChartSection({
                   onClick={() => toggleOverlay(key)}
                   aria-pressed={on}
                   className={cn(
-                    'press h-11 rounded-lg border px-3 text-xs font-semibold tracking-[0.04em]',
-                    on
-                      ? 'border-line-strong bg-surface-2 text-ink'
-                      : 'border-line text-ink-3 hover:text-ink'
+                    'press hit-slop h-8 border-b-2 text-xs font-semibold tracking-[0.04em]',
+                    on ? 'border-signal text-ink' : 'border-transparent text-ink-3 hover:text-ink-2'
                   )}
                 >
                   {key}
@@ -292,7 +265,7 @@ export default function StockChartSection({
           </div>
         </div>
 
-        <div className="relative p-4">
+        <div className="relative pt-4">
           {pending ? (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-surface/70">
               <Loader2 className="size-5 animate-spin text-signal" />
@@ -308,16 +281,16 @@ export default function StockChartSection({
             height={360}
           />
         </div>
-      </SpotlightCard>
+      </div>
 
       {chartData.indicators ? (
         <IndicatorGuide indicators={chartData.indicators} price={price} extras={extras} />
       ) : null}
 
       {/* AI analysis */}
-      <SpotlightCard spotlightColor="violet" className="mb-6 p-4 md:p-6">
+      <div>
         <h2 className="section-title mb-3">AI analysis</h2>
-        <p className="mb-4 max-w-[72ch] text-base leading-normal text-ink">
+        <p className="mb-5 max-w-[72ch] text-base leading-normal text-ink-2">
           {aiSummary ||
             (chartData.indicators
               ? `${company} shows ${
@@ -331,18 +304,15 @@ export default function StockChartSection({
         </p>
 
         {factors.length > 0 ? (
-          <div className="mb-4 grid gap-3 sm:grid-cols-2">
+          <div className="mb-5 grid gap-4 sm:grid-cols-2">
             {factors.map((f) => (
               <div key={f.label}>
-                <div className="mb-1 flex items-center justify-between text-xs">
+                <div className="mb-1.5 flex items-center justify-between text-xs">
                   <span className="label-sm">{f.label}</span>
                   <span className="num font-semibold text-ink-2">{f.score}</span>
                 </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-surface-2">
-                  <div
-                    className="h-full rounded-full"
-                    style={{ width: `${f.score}%`, backgroundColor: f.color, boxShadow: `0 0 10px ${f.color}` }}
-                  />
+                <div className="h-0.5 overflow-hidden rounded-full bg-line-strong">
+                  <div className="h-full rounded-full bg-signal" style={{ width: `${f.score}%` }} />
                 </div>
               </div>
             ))}
@@ -356,7 +326,7 @@ export default function StockChartSection({
           Run full AI research on {symbol}
           <ExternalLink className="size-3.5" strokeWidth={1.5} />
         </Link>
-      </SpotlightCard>
+      </div>
     </div>
   );
 }

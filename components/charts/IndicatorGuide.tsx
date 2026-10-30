@@ -24,12 +24,12 @@ export type ExtraIndicators = {
   atr?: number | null;
 };
 
-const STANCE_STYLE: Record<Stance, string> = {
-  buy: 'bg-up/12 text-up',
-  sell: 'bg-down/12 text-down',
-  wait: 'bg-ink-2/12 text-ink-2',
-  caution: 'bg-signal/12 text-signal',
-  na: 'bg-surface-2 text-ink-3',
+const STANCE_TEXT: Record<Stance, string> = {
+  buy: 'text-up',
+  sell: 'text-down',
+  wait: 'text-ink-2',
+  caution: 'text-signal',
+  na: 'text-ink-3',
 };
 
 const STANCE_LABEL: Record<Stance, string> = {
@@ -39,6 +39,8 @@ const STANCE_LABEL: Record<Stance, string> = {
   caution: 'Caution',
   na: 'No data',
 };
+
+type Row = { label: string; value: string; stance: Stance; meaning: string; action: string };
 
 export function IndicatorGuide({
   indicators,
@@ -57,13 +59,7 @@ export function IndicatorGuide({
   const bbHi = indicators.bollinger.upper;
   const bbMid = indicators.bollinger.middle;
 
-  const rows: {
-    label: string;
-    value: string;
-    stance: Stance;
-    meaning: string;
-    action: string;
-  }[] = [
+  const rows: Row[] = [
     (() => {
       if (!Number.isFinite(rsi)) {
         return {
@@ -278,8 +274,7 @@ export function IndicatorGuide({
   ).length;
 
   let overall: Stance = 'wait';
-  let overallText =
-    'Indicators disagree or lack data — treat this as indecisive.';
+  let overallText = 'Indicators disagree or lack data — treat this as indecisive.';
   if (actionable >= 2) {
     if (buyVotes >= sellVotes + 1 && buyVotes >= 2) {
       overall = 'buy';
@@ -289,21 +284,14 @@ export function IndicatorGuide({
       overallText = `More signals lean sell/caution (${Math.round(sellVotes)} vs ${buyVotes} buy). Favor patience or trimming over chasing.`;
     } else {
       overall = 'wait';
-      overallText =
-        'Mixed tape — buy and sell cues are close. Best read: wait / stay flat until it clarifies.';
+      overallText = 'Mixed tape — buy and sell cues are close. Best read: wait / stay flat until it clarifies.';
     }
   } else if (actionable === 0) {
     overall = 'na';
     overallText = 'Not enough history on this view to call buy or sell yet.';
   }
 
-  const extrasRows: {
-    label: string;
-    value: string;
-    stance: Stance;
-    meaning: string;
-    action: string;
-  }[] = [];
+  const extrasRows: Row[] = [];
 
   if (extras) {
     const adx = extras.adx;
@@ -424,49 +412,18 @@ export function IndicatorGuide({
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-2 border-b border-line pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="text-[12px] text-ink-3">
-            What should I do?
-          </div>
-          <p className="mt-1 max-w-3xl text-[13px] leading-5 text-ink">{overallText}</p>
+          <p className="text-[15px] text-ink-3">What should I do?</p>
+          <p className="mt-1 max-w-3xl text-sm leading-5 text-ink-2">{overallText}</p>
         </div>
-        <span
-          className={cn(
-            'inline-flex w-fit shrink-0 rounded-md px-3 py-1 text-[13px] font-medium',
-            STANCE_STYLE[overall]
-          )}
-        >
+        <span className={cn('num shrink-0 text-sm font-semibold', STANCE_TEXT[overall])}>
           {STANCE_LABEL[overall]}
         </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        {rows.map((r) => (
-          <div
-            key={r.label}
-            className="flex flex-col rounded-lg border border-line bg-surface px-3.5 py-3"
-          >
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <div className="text-[12px] text-ink-3">
-                {r.label}
-              </div>
-              <span
-                className={cn(
-                  'rounded-md px-2 py-0.5 text-[11px] font-medium',
-                  STANCE_STYLE[r.stance]
-                )}
-              >
-                {STANCE_LABEL[r.stance]}
-              </span>
-            </div>
-            <div className="mono text-lg text-ink">{r.value}</div>
-            <div className="mt-2 text-[12px] leading-4 text-ink">{r.meaning}</div>
-            <div className="mt-auto pt-2 text-[11px] leading-4 text-ink-2">{r.action}</div>
-          </div>
-        ))}
-      </div>
+      <IndicatorRows rows={rows} />
 
       <p className="text-[12px] leading-4 text-ink-3">
         Paper-trading helpers only — heuristics, not guarantees. Tap SMA20 / RSI / MACD / BB above
@@ -475,37 +432,28 @@ export function IndicatorGuide({
       </p>
 
       {extrasRows.length > 0 ? (
-        <div className="mt-2 flex flex-col gap-3">
-          <div className="text-[12px] text-ink-3">
-            Extra signals (from AI service)
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            {extrasRows.map((r) => (
-              <div
-                key={r.label}
-                className="flex flex-col rounded-lg border border-line bg-surface px-3.5 py-3"
-              >
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <div className="text-[12px] text-ink-3">
-                    {r.label}
-                  </div>
-                  <span
-                    className={cn(
-                      'rounded-md px-2 py-0.5 text-[11px] font-medium',
-                      STANCE_STYLE[r.stance]
-                    )}
-                  >
-                    {STANCE_LABEL[r.stance]}
-                  </span>
-                </div>
-                <div className="mono text-lg text-ink">{r.value}</div>
-                <div className="mt-2 text-[12px] leading-4 text-ink">{r.meaning}</div>
-                <div className="mt-auto pt-2 text-[11px] leading-4 text-ink-2">{r.action}</div>
-              </div>
-            ))}
-          </div>
+        <div className="flex flex-col gap-3 border-t border-line pt-5">
+          <div className="label-sm">Extra signals (from AI service)</div>
+          <IndicatorRows rows={extrasRows} />
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function IndicatorRows({ rows }: { rows: Row[] }) {
+  return (
+    <div className="flex flex-col divide-y divide-line">
+      {rows.map((r) => (
+        <div key={r.label} className="flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:gap-4">
+          <div className="flex w-full items-baseline justify-between gap-3 sm:w-auto sm:justify-start sm:gap-3">
+            <span className="w-20 shrink-0 text-sm font-medium text-ink">{r.label}</span>
+            <span className="num text-sm text-ink-2">{r.value}</span>
+            <span className={cn('num text-sm font-medium', STANCE_TEXT[r.stance])}>{STANCE_LABEL[r.stance]}</span>
+          </div>
+          <p className="text-[13px] leading-5 text-ink-3 sm:ml-auto sm:max-w-[46ch] sm:text-right">{r.meaning}</p>
+        </div>
+      ))}
     </div>
   );
 }

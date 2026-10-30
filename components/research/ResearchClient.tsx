@@ -15,7 +15,7 @@ import { ConfidenceMeter } from '@/components/ui/confidence-meter';
 import { PageEnter } from '@/components/ui/motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { notify } from '@/lib/notify';
-import { cn, formatPrice } from '@/lib/utils';
+import { cn, formatPrice, formatSignedPrice } from '@/lib/utils';
 
 type Stance = 'buy' | 'sell' | 'wait' | 'caution' | 'na';
 
@@ -50,9 +50,9 @@ function factorTone(score: number): {
   text: string;
   label: 'Strong' | 'Moderate' | 'Weak';
 } {
-  if (score >= 65) return { bar: '#22C55E', text: 'text-up', label: 'Strong' };
-  if (score >= 40) return { bar: '#FDD458', text: 'text-signal', label: 'Moderate' };
-  return { bar: '#EF4444', text: 'text-down', label: 'Weak' };
+  if (score >= 65) return { bar: 'var(--sg-up)', text: 'text-up', label: 'Strong' };
+  if (score >= 40) return { bar: 'var(--sg-signal)', text: 'text-signal', label: 'Moderate' };
+  return { bar: 'var(--sg-down)', text: 'text-down', label: 'Weak' };
 }
 
 function isCryptoSym(sym: string) {
@@ -524,7 +524,7 @@ export default function ResearchClient({ initialSymbols, initialSymbol }: Props)
                 )}
               >
                 {change != null
-                  ? `${up ? '+' : ''}${change.toFixed(2)} (${up ? '+' : ''}${changePct.toFixed(2)}%)`
+                  ? `${formatSignedPrice(change)} (${up ? '+' : ''}${changePct.toFixed(2)}%)`
                   : `${up ? '+' : ''}${changePct.toFixed(2)}%`}
               </span>
             ) : null}

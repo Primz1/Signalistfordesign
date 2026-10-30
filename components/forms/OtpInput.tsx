@@ -47,7 +47,7 @@ export default function OtpInput({
           pattern="[0-9]*"
           maxLength={index === 0 ? LENGTH : 1}
           aria-label={`Digit ${index + 1} of ${LENGTH}`}
-          className="num h-11 w-11 rounded-lg border border-line-strong bg-surface text-center text-base text-ink"
+          className="num h-11 w-11 rounded-lg border border-transparent bg-surface text-center text-base text-ink focus-visible:border-line-strong focus-visible:outline-none"
           onChange={(event) => {
             const value = event.target.value.replace(/\D/g, '');
             if (value.length > 1) {

@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { addToWatchlist, removeFromWatchlist } from "@/lib/actions/watchlist.actions";
 import { notify } from "@/lib/notify";
@@ -10,7 +9,7 @@ import clsx from "clsx";
 import { BellPlus, Star } from "lucide-react";
 import Link from "next/link";
 import { EmptyState as SignalistEmptyState } from "@/components/ui/empty-state";
-import { formatMarketCapValue } from "@/lib/utils";
+import { formatMarketCapValue, formatPrice as formatPriceBase } from "@/lib/utils";
 import { Sparkline } from "@/components/charts/Sparkline";
 import { deterministicSeries } from "@/lib/charts/deterministic-series";
 
@@ -41,16 +40,9 @@ const EmptyState = () => (
 	/>
 );
 
-const formatNumber = (value?: number, opts: Intl.NumberFormatOptions = {}) => {
-	if (value === undefined || value === null || Number.isNaN(value)) return '—';
-	return new Intl.NumberFormat(undefined, opts).format(value);
-};
-
-const formatCurrency = (value?: number) => formatNumber(value, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
-
 const formatPrice = (value?: number) => {
 	if (value === undefined || value === null || Number.isNaN(value)) return '—';
-	return formatCurrency(value);
+	return formatPriceBase(value);
 };
 
 const WatchlistTable = ({ items, onAddAlert }: WatchlistTableProps) => {
@@ -95,10 +87,10 @@ const WatchlistTable = ({ items, onAddAlert }: WatchlistTableProps) => {
 		if (!rows.length) return <EmptyState />;
 
 		return (
-			<div className="surface-card">
+			<div>
 				<Table className="table-fixed">
 					<TableHeader>
-						<TableRow className="border-b border-[var(--sg-border-specular)] hover:bg-transparent">
+						<TableRow className="border-b border-line hover:bg-transparent">
 							<TableHead className="w-12"><span className="sr-only">Remove</span></TableHead>
 							<TableHead>Symbol</TableHead>
 							<TableHead className="text-right">Price</TableHead>
@@ -115,7 +107,7 @@ const WatchlistTable = ({ items, onAddAlert }: WatchlistTableProps) => {
 							const ch = row.changePercent;
 							const up = typeof ch === 'number' ? ch >= 0 : true;
 							return (
-								<TableRow key={row.symbol} className="group h-12 hover:bg-[var(--sg-glass-hover)]">
+								<TableRow key={row.symbol} className="group h-12 hover:bg-surface-2">
 									<TableCell className="w-12 py-0 pr-0 pl-1">
 										<button
 											onClick={() => handleRemove(row.symbol, row.company)}
@@ -132,15 +124,10 @@ const WatchlistTable = ({ items, onAddAlert }: WatchlistTableProps) => {
 											<span className="block truncate text-xs text-ink-3" title={row.company}>{row.company}</span>
 										</Link>
 									</TableCell>
-									<TableCell className="num py-0 text-right text-sm text-ink">{formatCurrency(row.price)}</TableCell>
+									<TableCell className="num py-0 text-right text-sm text-ink">{formatPrice(row.price)}</TableCell>
 									<TableCell className="py-0 text-right">
 										{typeof ch === 'number' ? (
-											<span
-												className={clsx(
-													'num inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold',
-													ch >= 0 ? 'bg-up/15 text-up' : 'bg-down/15 text-down'
-												)}
-											>
+											<span className={clsx('num text-sm font-semibold', ch >= 0 ? 'text-up' : 'text-down')}>
 												{ch >= 0 ? '+' : '−'}{Math.abs(ch).toFixed(2)}%
 											</span>
 										) : (
@@ -155,6 +142,9 @@ const WatchlistTable = ({ items, onAddAlert }: WatchlistTableProps) => {
 												color={up ? 'var(--sg-up)' : 'var(--sg-down)'}
 												width={88}
 												height={28}
+												strokeWidth={1.5}
+												fill={false}
+												showDot={false}
 												className="ml-auto h-7 w-[88px]"
 											/>
 										) : (
@@ -171,29 +161,21 @@ const WatchlistTable = ({ items, onAddAlert }: WatchlistTableProps) => {
 									</TableCell>
 									<TableCell className="hidden py-0 text-right sm:table-cell">
 										{row.aiScore != null ? (
-											<div className="inline-flex flex-col items-end gap-1">
-												<span className={clsx('num text-sm font-semibold', row.aiScore >= 65 ? 'text-up' : row.aiScore >= 45 ? 'text-ink' : 'text-down')}>
-													{Math.round(row.aiScore)}
-												</span>
-												<div className="h-1 w-14 overflow-hidden rounded-full bg-surface-2">
-													<div
-														className="h-full rounded-full"
-														style={{
-															width: `${Math.round(row.aiScore)}%`,
-															backgroundColor: row.aiScore >= 65 ? 'var(--sg-up)' : row.aiScore >= 45 ? 'var(--sg-cyan)' : 'var(--sg-down)',
-														}}
-													/>
-												</div>
-											</div>
+											<span className="num text-sm font-semibold text-ink">{Math.round(row.aiScore)}</span>
 										) : (
 											<span className="num text-sm text-ink-3">—</span>
 										)}
 									</TableCell>
 									<TableCell className="hidden py-0 pr-2 text-right sm:table-cell">
-										<Button variant="outline" size="sm" aria-label={`New alert for ${row.symbol}`} className="px-3" onClick={() => onAddAlert?.(row)}>
+										<button
+											type="button"
+											aria-label={`New alert for ${row.symbol}`}
+											onClick={() => onAddAlert?.(row)}
+											className="text-btn hit-slop ml-auto gap-1.5 px-0"
+										>
 											<BellPlus className="size-3.5" />
 											<span className="hidden sm:inline">Alert</span>
-										</Button>
+										</button>
 									</TableCell>
 								</TableRow>
 							);

@@ -629,8 +629,8 @@ export default function PortfolioClient({
           </dl>
         </div>
 
-        <div className="surface-card flex min-h-[300px] flex-col p-4">
-          <div className="flex items-baseline justify-between gap-3 px-1 pb-3">
+        <div className="flex min-h-[300px] flex-col">
+          <div className="flex items-baseline justify-between gap-3 pb-3">
             <span className="mono text-[13px] text-ink-2">
               {formatPrice(portfolio.initialCash)} → {formatPrice(portfolio.totalValue)}
             </span>
@@ -647,7 +647,7 @@ export default function PortfolioClient({
               equitySeries={tearsheet?.equity_series}
             />
           </div>
-          <p className="px-1 pt-3 text-[12px] leading-4 text-ink-3">
+          <p className="pt-3 text-[12px] leading-4 text-ink-3">
             {tearsheet?.enough_history
               ? 'Risk metrics are QuantStats estimates from your paper trade history.'
               : tearsheet?.message ||

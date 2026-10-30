@@ -170,7 +170,7 @@ export default function TradeHistoryClient() {
       </div>
 
       {showFilters && (
-        <div className="space-y-3 rounded-lg border border-line bg-surface p-4">
+        <div className="space-y-3 border-y border-line py-4">
           <Tabs
             value={side}
             onValueChange={(v) => setSide(v as 'all' | 'buy' | 'sell')}
@@ -224,7 +224,7 @@ export default function TradeHistoryClient() {
           ))}
         </div>
       ) : summary ? (
-        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-px bg-line md:grid-cols-4">
           <Mini label="Trades" value={String(summary.tradeCount)} />
           <Mini
             label="Realized P/L"
@@ -240,7 +240,7 @@ export default function TradeHistoryClient() {
       ) : null}
 
       {isPending && !hasLoaded ? (
-        <div className="space-y-2 rounded-lg border border-line p-3" aria-busy="true" aria-label="Loading trades">
+        <div className="space-y-2" aria-busy="true" aria-label="Loading trades">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-10 w-full" />
           ))}
@@ -250,7 +250,7 @@ export default function TradeHistoryClient() {
       ) : (
         <div
           className={cn(
-            'overflow-x-auto rounded-lg border border-line',
+            'overflow-x-auto',
             isPending && 'opacity-60'
           )}
         >

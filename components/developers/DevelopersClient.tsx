@@ -105,9 +105,9 @@ export default function DevelopersClient() {
             className="py-10"
           />
         ) : (
-          <ul className="surface-card divide-y divide-line text-[14px]">
+          <ul className="divide-y divide-line text-[14px]">
             {keys.map((k) => (
-              <li key={String(k._id)} className="flex items-baseline justify-between gap-4 px-4 py-3 text-ink-2">
+              <li key={String(k._id)} className="flex items-baseline justify-between gap-4 py-3 text-ink-2">
                 <span className="text-ink">
                   {String(k.name)} <span className="mono text-ink-3">{String(k.keyPrefix)}…</span>
                 </span>

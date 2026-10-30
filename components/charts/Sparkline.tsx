@@ -8,6 +8,8 @@ type SparklineProps = {
   className?: string;
   strokeWidth?: number;
   showDot?: boolean;
+  /** Render the gradient area fill beneath the line. Defaults to on. */
+  fill?: boolean;
 };
 
 /**
@@ -24,6 +26,7 @@ export function Sparkline({
   className,
   strokeWidth = 1.75,
   showDot = true,
+  fill = true,
 }: SparklineProps) {
   if (!values.length) return null;
 
@@ -44,13 +47,15 @@ export function Sparkline({
       preserveAspectRatio="none"
       aria-hidden
     >
-      <defs>
-        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity={0.45} />
-          <stop offset="100%" stopColor={color} stopOpacity={0} />
-        </linearGradient>
-      </defs>
-      <path d={areaPath} fill={`url(#${gradientId})`} stroke="none" />
+      {fill && (
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity={0.45} />
+            <stop offset="100%" stopColor={color} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+      )}
+      {fill && <path d={areaPath} fill={`url(#${gradientId})`} stroke="none" />}
       <path
         d={linePath}
         fill="none"

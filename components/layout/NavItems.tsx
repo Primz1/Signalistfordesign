@@ -71,7 +71,7 @@ const NavItems = ({
   }
 
   return (
-    <ul className={cn('flex h-16 items-center gap-1', className)}>
+    <ul className={cn('flex h-14 items-center gap-6', className)}>
       {NAV_ITEMS.map(({ href, label }) => {
         const active = isActive(href);
         return (
@@ -81,8 +81,10 @@ const NavItems = ({
               prefetch
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'inline-flex h-11 items-center whitespace-nowrap rounded-lg px-3 text-sm',
-                active ? 'bg-surface-2 font-semibold text-ink' : 'text-ink-2 hover:bg-surface-2 hover:text-ink',
+                'press relative inline-flex h-14 items-center whitespace-nowrap text-sm after:absolute after:inset-x-0 after:bottom-0 after:h-[2px] after:rounded-full after:transition-colors',
+                active
+                  ? 'font-semibold text-ink after:bg-signal'
+                  : 'text-ink-2 after:bg-transparent hover:text-ink',
                 itemClassName
               )}
             >

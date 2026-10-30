@@ -278,11 +278,9 @@ export function SearchCommand({ renderAs = 'button', label = 'Add stock', initia
                 const monogram = (stock.symbol || '??').slice(0, 2);
                 const isCrypto = /crypto/i.test(stock.type);
                 const isEtf = /etf|etn/i.test(stock.type);
-                const monoClass = isCrypto
-                  ? 'bg-warm/20 text-warm'
-                  : isEtf
-                    ? 'bg-signal/20 text-signal'
-                    : 'bg-warm/20 text-warm';
+                const monoClass = isCrypto || isEtf
+                  ? 'bg-surface-2 text-ink'
+                  : 'bg-surface-2 text-ink-2';
                 return (
                 <li key={`${stock.symbol}-${stock.exchange}`} className="search-item">
                   {resolvedMode === "add" ? (

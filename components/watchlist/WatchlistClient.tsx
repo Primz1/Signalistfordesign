@@ -529,7 +529,7 @@ const WatchlistClient = ({ initialItems, initialStocks, initialSymbols, initialA
                 onAction={() => setAlertModalOpen(true)}
               />
             ) : (
-              <ul className="surface-card max-h-[560px] divide-y divide-line overflow-y-auto">
+              <ul className="max-h-[560px] divide-y divide-line overflow-y-auto">
                 {alerts.map((alert) => {
                   const quote = priceLookup.get(alert.symbol.toUpperCase());
                   const price = quote?.price;
@@ -616,7 +616,7 @@ const WatchlistClient = ({ initialItems, initialStocks, initialSymbols, initialA
                 description="When a price crosses one of your levels, it shows up here and in the bell at the top."
               />
             ) : (
-              <ul className="surface-card max-h-[480px] divide-y divide-line overflow-y-auto">
+              <ul className="max-h-[480px] divide-y divide-line overflow-y-auto">
                 {notifications.map((n) => (
                   <li key={n._id || `${n.alertId}-${n.triggeredAt}`} className="flex gap-3 px-4 py-3.5">
                     <span
