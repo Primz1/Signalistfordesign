@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { PALETTE, SERIES } from '@/lib/theme';
+import { SERIES } from '@/lib/theme';
 import { corridorToRect, isPointInSafeTriangle, pointInRect } from '@/lib/ui/safe-triangle';
 
 /** Portfolio allocation donut — sized to fill the card; legend stays tight. */
@@ -89,7 +89,7 @@ export function SectorsDonut({
             cy={CX}
             r={R}
             fill="none"
-            stroke={PALETTE.surface2}
+            stroke="var(--sg-surface-2)"
             strokeWidth={STROKE}
           />
           {arcs.map((a, i) => (

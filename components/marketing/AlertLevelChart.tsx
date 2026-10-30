@@ -243,7 +243,7 @@ export function AlertLevelChart({
           aria-valuetext={`${levelLabel}, ${count} crossings`}
           onKeyDown={onKey}
           className={cn(
-            'num absolute right-0 flex h-11 -translate-y-1/2 items-center gap-2 rounded-lg bg-signal px-3 text-sm font-semibold text-signal-ink outline-offset-4',
+            'num absolute right-0 flex h-11 -translate-y-1/2 items-center gap-1.5 px-1.5 text-sm font-semibold text-signal outline-offset-4 focus-visible:rounded-md focus-visible:ring-1 focus-visible:ring-signal/40',
             dragging ? 'scale-[1.04]' : 'transition-[top] duration-200 ease-[var(--ease-out-ui)]'
           )}
           style={{ top: `${levelPct}%` }}

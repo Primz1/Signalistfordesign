@@ -205,7 +205,7 @@ export default function StockChartSection({
             </span>
             {aiScore != null && Number.isFinite(aiScore) ? (
               <span>
-                AI score <span className="text-ink-2">{Math.round(aiScore)}</span>
+                AI score <span className="text-ink">{Math.round(aiScore)}</span>
               </span>
             ) : null}
           </div>

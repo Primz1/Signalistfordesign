@@ -271,7 +271,7 @@ export function SearchCommand({ renderAs = 'button', label = 'Add stock', initia
           ) : (
             <ul>
               <div className="search-count">
-                {isSearchMode ? 'Search Results': 'Popular Stocks'}
+                {isSearchMode ? 'Search results': 'Popular stocks'}
                {`  `}({displayStocks?.length || 0})
               </div>
               {displayStocks?.map((stock) => {

@@ -382,7 +382,7 @@
     @apply mt-2 max-w-[65ch] text-base leading-normal text-ink-2;
   }
   .label-sm {
-    @apply text-xs font-semibold tracking-[0.04em] text-ink-3 uppercase;
+    @apply text-[13px] font-medium text-ink-3;
   }
   .meta {
     @apply text-[13px] text-ink-3;
@@ -445,7 +445,7 @@
     @apply max-h-[360px] bg-surface!;
   }
   .search-list-indicator {
-    @apply px-4 py-2 text-xs font-semibold tracking-[0.04em] text-ink-3 uppercase;
+    @apply px-4 py-2 text-[13px] text-ink-3;
   }
   .search-list-empty {
     @apply bg-transparent! py-8 text-center text-sm text-ink-3;
@@ -457,7 +457,7 @@
     @apply absolute top-1/2 right-12 h-4 w-4 -translate-y-1/2 animate-spin text-ink-3;
   }
   .search-count {
-    @apply border-b border-line bg-transparent px-4 py-2 text-xs font-semibold tracking-[0.04em] text-ink-3 uppercase;
+    @apply border-b border-line bg-transparent px-4 py-2 text-[13px] text-ink-3;
   }
   .search-item {
     @apply my-0 w-full rounded-lg px-1 data-[selected=true]:bg-surface-2;

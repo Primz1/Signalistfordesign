@@ -43,6 +43,8 @@ type ChartData = {
   } | null;
 };
 
+type PriceTag = { top: number; color: string; text: string };
+
 function toLine(
   candles: Candle[],
   values: number[] | undefined
@@ -70,6 +72,7 @@ export default function CandlestickChart({
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const [themeTick, setThemeTick] = useState(0);
+  const [priceTag, setPriceTag] = useState<PriceTag | null>(null);
 
   useEffect(() => {
     const obs = new MutationObserver(() => setThemeTick((n) => n + 1));
@@ -88,6 +91,7 @@ export default function CandlestickChart({
 
     const paneCount = 1 + (showRsi ? 1 : 0) + (showMacd ? 1 : 0);
     const PALETTE = readPalette();
+    const isDark = document.documentElement.classList.contains('dark');
     const mix = (color: string, amount: number) => {
       const m = color.trim().match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
       if (m) {
@@ -147,8 +151,10 @@ export default function CandlestickChart({
       borderVisible: false,
       wickUpColor: PALETTE.up,
       wickDownColor: PALETTE.down,
-      priceLineColor: PALETTE.signal,
+      priceLineColor: mix(PALETTE.signal, 0.35),
       priceLineWidth: 1,
+      priceLineStyle: LineStyle.Dashed,
+      lastValueVisible: false,
     });
 
     candleSeries.setData(
@@ -169,14 +175,15 @@ export default function CandlestickChart({
       lastValueVisible: false,
     });
     chart.priceScale('volume').applyOptions({
-      scaleMargins: { top: 0.78, bottom: 0 },
+      scaleMargins: { top: 0.82, bottom: 0 },
     });
 
+    const volOpacity = isDark ? 0.25 : 0.3;
     volumeSeries.setData(
       data.candles.map((c) => ({
         time: c.time as unknown as Time,
         value: c.volume ?? 0,
-        color: c.close >= c.open ? mix(PALETTE.up, 0.25) : mix(PALETTE.down, 0.25),
+        color: c.close >= c.open ? mix(PALETTE.up, volOpacity) : mix(PALETTE.down, volOpacity),
       }))
     );
 
@@ -318,6 +325,21 @@ export default function CandlestickChart({
 
     chart.timeScale().fitContent();
 
+    const lastCandle = data.candles[data.candles.length - 1];
+    const y = lastCandle ? candleSeries.priceToCoordinate(lastCandle.close) : null;
+    setPriceTag(
+      lastCandle && y != null
+        ? {
+            top: y,
+            color: lastCandle.close >= lastCandle.open ? PALETTE.up : PALETTE.down,
+            text: lastCandle.close.toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }),
+          }
+        : null
+    );
+
     const handleResize = () => {
       if (containerRef.current) {
         chart.applyOptions({ width: containerRef.current.clientWidth });
@@ -330,6 +352,7 @@ export default function CandlestickChart({
       window.removeEventListener('resize', handleResize);
       chart.remove();
       chartRef.current = null;
+      setPriceTag(null);
       if (containerRef.current) containerRef.current.replaceChildren();
     };
   }, [
@@ -357,5 +380,18 @@ export default function CandlestickChart({
     );
   }
 
-  return <div ref={containerRef} className={cn('relative w-full', className)} />;
+  return (
+    <div className={cn('relative w-full', className)}>
+      <div ref={containerRef} className="w-full" />
+      {priceTag ? (
+        <div
+          aria-hidden
+          className="num pointer-events-none absolute right-1.5 text-[11px] font-semibold"
+          style={{ top: priceTag.top, transform: 'translateY(-50%)', color: priceTag.color }}
+        >
+          {priceTag.text}
+        </div>
+      ) : null}
+    </div>
+  );
 }

@@ -77,10 +77,10 @@ const CountrySelect = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-full p-0 bg-gray-800 border-gray-600"
+        className="w-full p-0 border-line-strong bg-surface"
         align="start"
       >
-        <Command className="bg-gray-800 border-gray-600">
+        <Command className="border-line-strong bg-surface">
           <CommandInput
             placeholder="Search countries..."
             className="country-select-input"
@@ -88,8 +88,8 @@ const CountrySelect = ({
           <CommandEmpty className="country-select-empty">
             No country found.
           </CommandEmpty>
-          <CommandList className="max-h-60 bg-gray-800 scrollbar-hide-default">
-            <CommandGroup className="bg-gray-800">
+          <CommandList className="max-h-60 bg-surface scrollbar-hide-default">
+            <CommandGroup className="bg-surface">
               {countries.map((country) => (
                 <CommandItem
                   key={country.value}
@@ -102,7 +102,7 @@ const CountrySelect = ({
                 >
                   <Check
                     className={cn(
-                      'mr-2 h-4 w-4 text-yellow-500',
+                      'mr-2 h-4 w-4 text-signal',
                       value === country.value ? 'opacity-100' : 'opacity-0'
                     )}
                   />
@@ -144,8 +144,8 @@ export const CountrySelectField = ({
                     <CountrySelect value={field.value} onChange={field.onChange} />
                 )}
             />
-            {error && <p className='text-sm text-red-500'>{error.message}</p>}
-            <p className='text-xs text-gray-500'>
+            {error && <p className='text-sm text-down'>{error.message}</p>}
+            <p className='text-xs text-ink-3'>
                 Helps us show market data and news relevant to you.
             </p>
         </div>

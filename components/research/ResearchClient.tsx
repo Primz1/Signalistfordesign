@@ -35,12 +35,6 @@ const STANCE_LABEL: Record<Stance, string> = {
   na: 'No data',
 };
 
-function initials(name: string, symbol: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return symbol.slice(0, 2).toUpperCase();
-}
-
 function clampScore(n: number) {
   return Math.max(0, Math.min(100, Math.round(n)));
 }
@@ -494,11 +488,7 @@ export default function ResearchClient({ initialSymbols, initialSymbol }: Props)
                 alt=""
                 className="size-10 rounded-lg bg-surface-2 object-contain p-1"
               />
-            ) : (
-              <div className="mono flex size-10 items-center justify-center rounded-lg bg-surface-3 text-sm font-semibold text-ink">
-                {initials(company, symbol)}
-              </div>
-            )}
+            ) : null}
             <h1 className="page-title">{company}</h1>
             <span className="mono text-[13px] text-ink-2">({symbol})</span>
             {header?.exchange ? (
@@ -533,19 +523,8 @@ export default function ResearchClient({ initialSymbols, initialSymbol }: Props)
 
         <div className="flex shrink-0 flex-col items-start gap-2.5 md:items-end">
           {aiScore != null ? (
-            <span
-              className="text-right"
-            >
-              <span className="label-sm block">AI score</span>
-              <span
-                className={cn(
-                  'figure text-[36px] leading-10',
-                  aiScore >= 60 ? 'text-up' : aiScore >= 40 ? 'text-ink' : 'text-down'
-                )}
-              >
-                {Math.round(aiScore)}
-              </span>
-              <span className="mono text-[14px] text-ink-3">/100</span>
+            <span className="text-[15px] text-ink-3">
+              AI score <span className="num text-ink">{Math.round(aiScore)}</span>
             </span>
           ) : null}
         </div>
