@@ -10,6 +10,7 @@ import UserDropdown from '@/components/layout/UserDropdown';
 import { SearchCommand } from '@/components/search/SearchCommand';
 import { markNotifications } from '@/lib/actions/alertNotification.actions';
 import { useSafeTriangle } from '@/components/ui/use-safe-triangle';
+import { useScrolled } from '@/lib/hooks/useScrolled';
 
 type Notification = {
   _id?: string;
@@ -34,6 +35,7 @@ export default function AppHeader({
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   const safe = useSafeTriangle(notifOpen, () => setNotifOpen(false));
   const swipe = useRef<{ y: number } | null>(null);
+  const scrolled = useScrolled();
 
   const unread = notifications.filter((n) => !n.read).length;
 
@@ -44,7 +46,10 @@ export default function AppHeader({
 
   return (
     <>
-    <header className="app-bar sticky top-0 z-30 border-b border-ink/6 pt-[env(safe-area-inset-top)]">
+    <header
+      className="app-bar sticky top-0 z-30 border-b border-ink/6 pt-[env(safe-area-inset-top)]"
+      data-scrolled={scrolled}
+    >
       <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-6 px-4 md:px-6">
         <BrandLogo />
 

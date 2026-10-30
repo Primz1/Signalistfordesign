@@ -185,15 +185,15 @@ export function AlertLevelChart({
 
   return (
     <figure className={cn('@container w-full', className)}>
-      <figcaption className="flex flex-col gap-4 @3xl:flex-row @3xl:items-end @3xl:justify-between">
+      <figcaption className="flex flex-col gap-4 @3xl:flex-row @3xl:items-end @3xl:justify-between @3xl:pr-[5.5rem]">
         <div>
-          <div className="text-sm text-ink-2">
+          <div className="text-[14px] text-ink-2">
             <span className="num font-semibold text-ink">{symbol}</span> · daily closes, last{' '}
             {sessions} sessions
           </div>
-          <div className="mt-1 text-sm text-ink-3">Drag the level, or use arrow keys to move it.</div>
+          <div className="mt-1 text-[14px] text-ink-3">Drag the level, or use arrow keys to move it.</div>
         </div>
-        <div className="num text-sm text-ink-3 @3xl:text-right">
+        <div className="num text-[14px] text-ink-3 @3xl:text-right">
           now {Math.abs(distance).toFixed(1)}% {distance >= 0 ? 'above' : 'below'} your level
         </div>
       </figcaption>
@@ -284,7 +284,7 @@ export function AlertLevelChart({
           aria-valuetext={`${levelLabel}, ${count} crossings`}
           onKeyDown={onKey}
           className={cn(
-            'num absolute right-0 flex h-11 -translate-y-1/2 items-center gap-1 px-1.5 text-sm font-medium text-ink-2 outline-offset-4 focus-visible:rounded-md focus-visible:ring-1 focus-visible:ring-signal/40',
+            'num absolute right-0 flex h-11 -translate-y-1/2 items-center gap-1 px-1.5 text-[13px] font-medium text-signal outline-offset-4 focus-visible:rounded-md focus-visible:ring-1 focus-visible:ring-signal/40',
             dragging ? 'scale-[1.04]' : 'transition-[top] duration-200 ease-[var(--ease-out-ui)]'
           )}
           style={{ top: `${levelPct}%` }}

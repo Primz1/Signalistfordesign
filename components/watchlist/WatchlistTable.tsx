@@ -91,8 +91,7 @@ const WatchlistTable = ({ items, onAddAlert }: WatchlistTableProps) => {
 				<Table className="table-fixed">
 					<TableHeader>
 						<TableRow className="border-b border-line hover:bg-transparent">
-							<TableHead className="w-11"><span className="sr-only">Remove</span></TableHead>
-							<TableHead className="w-[34%]">Symbol</TableHead>
+							<TableHead className="sm:w-[34%]">Symbol</TableHead>
 							<TableHead className="w-24 text-right">Price</TableHead>
 							<TableHead className="w-20 text-right">Today</TableHead>
 							<TableHead className="hidden text-right md:table-cell">7D trend</TableHead>
@@ -107,18 +106,16 @@ const WatchlistTable = ({ items, onAddAlert }: WatchlistTableProps) => {
 							const ch = row.changePercent;
 							const up = typeof ch === 'number' ? ch >= 0 : true;
 							return (
-								<TableRow key={row.symbol} data-reveal className="group h-14 hover:bg-surface-2">
-									<TableCell className="w-11 py-0 pr-0 pl-1">
+								<TableRow key={row.symbol} data-reveal className="group relative h-14 hover:bg-surface-2">
+									<TableCell className="relative py-0">
 										<button
 											onClick={() => handleRemove(row.symbol, row.company)}
 											aria-label={`Remove ${row.symbol} from watchlist`}
-											className="press hit-slop inline-flex size-11 items-center justify-center rounded-lg text-ink-3 opacity-0 transition-opacity hover:bg-surface-3 hover:text-ink focus-visible:opacity-100 group-hover:opacity-100"
+											className="press absolute top-1/2 left-0 z-10 hidden size-7 -translate-y-1/2 items-center justify-center rounded-md text-ink-3 opacity-0 transition-opacity hover:bg-surface-3 hover:text-ink focus-visible:opacity-100 group-hover:opacity-100 md:inline-flex"
 											title="Remove from watchlist"
 										>
-											<Star className="size-4 fill-current" />
+											<Star className="size-3.5 fill-current" />
 										</button>
-									</TableCell>
-									<TableCell className="py-0">
 										<Link href={`/stocks/${row.symbol}`} className="block min-w-0">
 											<span className="num block text-sm font-semibold text-ink">{row.symbol}</span>
 											<span className="block truncate text-xs text-ink-3" title={row.company}>{row.company}</span>

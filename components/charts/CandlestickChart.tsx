@@ -141,7 +141,13 @@ export default function CandlestickChart({
         entireTextOnly: true,
         scaleMargins: { top: 0.08, bottom: 0.1 },
       },
-      timeScale: { borderColor: PALETTE.line, borderVisible: false },
+      timeScale: {
+        borderColor: PALETTE.line,
+        borderVisible: false,
+        fixLeftEdge: true,
+        fixRightEdge: true,
+        rightOffset: 2,
+      },
       localization: {
         priceFormatter: (price: number) =>
           price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
@@ -329,8 +335,16 @@ export default function CandlestickChart({
     }
 
     chart.timeScale().fitContent();
-    const fittedSpacing = chart.timeScale().options().barSpacing;
-    if (fittedSpacing > 8) {
+    const containerWidth = containerRef.current.clientWidth;
+    const naturalSpacing = containerWidth / (data.candles.length - 1 || 1);
+    const isNarrowViewport = typeof window !== 'undefined' && window.innerWidth < 640;
+    const minSpacing = isNarrowViewport ? 6 : 8;
+    if (naturalSpacing < minSpacing) {
+      // Too many bars to fit the viewport legibly — hold a minimum bar
+      // width and show the most recent bars instead of cramming everything in.
+      chart.timeScale().applyOptions({ barSpacing: minSpacing });
+      chart.timeScale().scrollToRealTime();
+    } else if (naturalSpacing > 8) {
       chart.timeScale().applyOptions({ barSpacing: 8 });
     }
 

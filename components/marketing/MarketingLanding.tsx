@@ -7,6 +7,7 @@ import ThemeToggle from '@/components/layout/ThemeToggle';
 import { AlertLevelChart } from '@/components/marketing/AlertLevelChart';
 import { HeroReveal } from '@/components/marketing/HeroReveal';
 import { Reveal, ScrollCountUp } from '@/components/motion';
+import { useScrolled } from '@/lib/hooks/useScrolled';
 import { cn } from '@/lib/utils';
 import type { Candle } from '@/lib/market/ohlcv';
 import type { MarketingLiveData, MarketingQuote } from '@/lib/marketing/live-data';
@@ -68,8 +69,9 @@ function Sparkline({ points, up, className }: { points: number[]; up: boolean; c
 }
 
 function Header() {
+  const scrolled = useScrolled();
   return (
-    <header className="app-bar sticky top-0 z-30 border-b border-ink/6">
+    <header className="app-bar sticky top-0 z-30 border-b border-ink/6" data-scrolled={scrolled}>
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-6 px-4 md:px-8">
         <BrandLogo href="/" />
         <nav aria-label="Sections" className="hidden items-center gap-1 md:flex">

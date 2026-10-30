@@ -95,7 +95,13 @@ export function PortfolioHeroChart({
               {formatPrice(displayPrice)}
             </>
           ) : (
-            <span style={{ color }}>{up ? '+' : ''}{changePct.toFixed(2)}% this range</span>
+            <>
+              <span className="font-semibold" style={{ color }}>
+                {up ? '+' : ''}
+                {changePct.toFixed(2)}%
+              </span>{' '}
+              <span className="text-[13px] text-ink-3">this range</span>
+            </>
           )}
         </div>
         <div className="flex gap-5">
