@@ -30,7 +30,7 @@ export const PALETTE_LIGHT = {
   ink: '#111111',
   ink2: '#3c3c43',
   ink3: '#6e6e73',
-  signal: '#4d7c0f',
+  signal: '#111111',
   signalInk: '#ffffff',
   up: '#15803d',
   down: '#d92d20',

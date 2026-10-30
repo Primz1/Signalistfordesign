@@ -37,7 +37,7 @@ export default function PreviewStock() {
   return (
     <StockChartSection
       symbol="NVDA"
-      company="NVIDIA Corporation Common Stock Long Legal Name"
+      company="NVIDIA Corporation"
       exchange="NASDAQ"
       isInWatchlist
       aiSummary="Price is holding above the 50-session average. The move today is +2.41% against yesterday's close, with volume in line with the last month."

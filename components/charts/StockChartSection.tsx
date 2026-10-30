@@ -166,10 +166,14 @@ export default function StockChartSection({
               />
             ) : null}
             <div className="min-w-0">
-              <h1 className="truncate text-xl font-semibold tracking-[-0.02em] text-ink">{company}</h1>
-              <div className="num text-sm text-ink-3">
+              <h1 className="truncate text-[15px] text-ink-3">{company}</h1>
+              <div className="num mt-0.5 text-lg font-semibold tracking-[-0.02em] text-ink">
                 {symbol}
-                {exchange ? ` · ${exchange.split(/[\s/-]/)[0] || exchange}` : ''}
+                {exchange ? (
+                  <span className="ml-1.5 text-sm font-normal text-ink-3">
+                    {exchange.split(/[\s/-]/)[0] || exchange}
+                  </span>
+                ) : null}
               </div>
             </div>
           </div>

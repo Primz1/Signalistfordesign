@@ -1,11 +1,13 @@
 'use client';
 
-import { useCallback, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import gsap from 'gsap';
 import type { Candle } from '@/lib/market/ohlcv';
+import { monotonePath } from '@/lib/charts/monotone-path';
 import { cn } from '@/lib/utils';
 
 const W = 1200;
-const H = 440;
+const H = 380;
 const PAD_Y = 24;
 
 function niceStep(price: number) {
@@ -23,24 +25,29 @@ function fmt(n: number, step: number) {
   });
 }
 
-/** Price touched the level when the candle's range contains it; count each new touch once. */
-function crossings(candles: Candle[], level: number) {
-  let count = 0;
-  let last: number | null = null;
+/** Every session where the level first entered the candle's [low, high] range, in order. */
+function crossingTouches(candles: Candle[], level: number) {
+  const touches: { time: number; index: number }[] = [];
   let prev = false;
-  for (const c of candles) {
+  candles.forEach((c, i) => {
     const touched = c.low <= level && level <= c.high;
-    if (touched && !prev) count++;
-    if (touched) last = c.time;
+    if (touched && !prev) touches.push({ time: c.time, index: i });
     prev = touched;
-  }
-  return { count, last };
+  });
+  return touches;
+}
+
+/** Down-samples touches to at most 3 representative markers: first, middle, last. */
+function pickMarkers(touches: { time: number; index: number }[]) {
+  if (touches.length <= 3) return touches;
+  const mid = touches[Math.floor(touches.length / 2)];
+  return [touches[0], mid, touches[touches.length - 1]];
 }
 
 /**
- * The landing hero's live thing: real daily candles drawn as grey noise; the sessions
- * where price touched your level light up amber. Drag the level (or use arrow keys).
- * Renders a complete, correct picture on the server; dragging is the enhancement.
+ * The landing hero's live thing: a calm single price line (not a wall of
+ * candles) with the user's alert level as a thin dashed reference. Drag the
+ * level (or use arrow keys) to see how often price would have reached it.
  */
 export function AlertLevelChart({
   symbol,
@@ -53,22 +60,27 @@ export function AlertLevelChart({
 }) {
   const id = useId();
   const plotRef = useRef<HTMLDivElement>(null);
+  const lineRef = useRef<SVGPathElement>(null);
+  const markersRef = useRef<SVGGElement>(null);
   const [dragging, setDragging] = useState(false);
+  const [ready, setReady] = useState(false);
 
-  const { lo, hi, step, initial, lastClose } = useMemo(() => {
+  const { lo, hi, step, initial, lastClose, closes } = useMemo(() => {
     const lows = candles.map((c) => c.low);
     const highs = candles.map((c) => c.high);
     const lo = Math.min(...lows);
     const hi = Math.max(...highs);
-    const closes = candles.slice(-60).map((c) => c.close).sort((a, b) => a - b);
-    const median = closes[Math.floor(closes.length / 2)] ?? (lo + hi) / 2;
+    const closes = candles.map((c) => c.close);
+    const recent = closes.slice(-60).slice().sort((a, b) => a - b);
+    const median = recent[Math.floor(recent.length / 2)] ?? (lo + hi) / 2;
     const step = niceStep(median);
     return {
       lo,
       hi,
       step,
       initial: Math.round(median / step) * step,
-      lastClose: candles[candles.length - 1]?.close ?? median,
+      lastClose: closes[closes.length - 1] ?? median,
+      closes,
     };
   }, [candles]);
 
@@ -84,7 +96,20 @@ export function AlertLevelChart({
   );
   const levelPct = (y(level) / H) * 100;
 
-  const { count, last } = useMemo(() => crossings(candles, level), [candles, level]);
+  const n = candles.length;
+  const stepX = W / (n - 1 || 1);
+
+  const linePath = useMemo(
+    () => monotonePath(closes.map((c, i) => ({ x: i * stepX, y: y(c) }))),
+    [closes, stepX, y]
+  );
+  const areaPath = `${linePath} L${(n - 1) * stepX},${H} L0,${H} Z`;
+
+  const { count, markers } = useMemo(() => {
+    const touches = crossingTouches(candles, level);
+    return { count: touches.length, markers: pickMarkers(touches) };
+  }, [candles, level]);
+
   const distance = ((lastClose - level) / level) * 100;
 
   const setFromPointer = (clientY: number) => {
@@ -119,13 +144,33 @@ export function AlertLevelChart({
     }
   };
 
-  const n = candles.length;
-  const slot = W / n;
-  const body = Math.max(1.5, slot * 0.62);
+  // Draw the line in once on mount; markers fade in right after. Reduced
+  // motion shows the final state immediately.
+  useEffect(() => {
+    const line = lineRef.current;
+    if (!line) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setReady(true);
+      return;
+    }
+    const length = line.getTotalLength();
+    gsap.set(line, { strokeDasharray: length, strokeDashoffset: length });
+    gsap.set(markersRef.current ? Array.from(markersRef.current.children) : [], { opacity: 0 });
+    const tl = gsap.timeline({ onComplete: () => setReady(true) });
+    tl.to(line, { strokeDashoffset: 0, duration: 1.3, ease: 'power3.out' }).to(
+      markersRef.current ? Array.from(markersRef.current.children) : [],
+      { opacity: 1, duration: 0.4, ease: 'power2.out', stagger: 0.12 },
+      '-=0.2'
+    );
+    return () => {
+      tl.kill();
+    };
+    // Intentionally run once on mount only — the line should not redraw
+    // itself every time the level (and therefore marker positions) changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const sessions = n;
-  const lastLabel = last
-    ? new Date(last * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    : null;
   const levelLabel = fmt(level, step);
 
   return (
@@ -133,32 +178,20 @@ export function AlertLevelChart({
       <figcaption className="flex flex-col gap-4 @3xl:flex-row @3xl:items-end @3xl:justify-between">
         <div>
           <div className="text-base text-ink-2">
-            <span className="num font-semibold text-ink">{symbol}</span> · daily candles, last{' '}
+            <span className="num font-semibold text-ink">{symbol}</span> · daily closes, last{' '}
             {sessions} sessions
           </div>
-          <div className="mt-1 text-sm text-ink-3">
-            Drag the level. Sessions that touched it are marked.
-          </div>
+          <div className="mt-1 text-sm text-ink-3">Drag the level, or use arrow keys to move it.</div>
         </div>
-        <div aria-live="polite" className="@3xl:text-right">
-          <div className="num text-[32px] leading-none font-semibold tracking-[-0.03em] text-ink md:text-[48px] md:tracking-[-0.04em]">
-            {count}
-            <span className="ml-2 text-base font-normal tracking-normal text-ink-2">
-              {count === 1 ? 'time price reached it' : 'times price reached it'}
-            </span>
-          </div>
-          <div className="num mt-2 text-sm text-ink-3">
-            at {levelLabel}
-            {lastLabel ? ` · last on ${lastLabel}` : ''} · now{' '}
-            {Math.abs(distance).toFixed(1)}% {distance >= 0 ? 'above' : 'below'}
-          </div>
+        <div className="num text-sm text-ink-3 @3xl:text-right">
+          now {Math.abs(distance).toFixed(1)}% {distance >= 0 ? 'above' : 'below'} your level
         </div>
       </figcaption>
 
       <div
         ref={plotRef}
         className={cn(
-          'relative mt-6 h-[300px] touch-none select-none md:h-[440px]',
+          'relative mt-6 h-[260px] touch-none select-none md:h-[380px]',
           dragging ? 'cursor-grabbing' : 'cursor-ns-resize'
         )}
         onPointerDown={(e) => {
@@ -175,62 +208,54 @@ export function AlertLevelChart({
           preserveAspectRatio="none"
           className="absolute inset-y-0 left-0 h-full w-[calc(100%-5.5rem)]"
           role="img"
-          aria-label={`${symbol} daily price, ${sessions} sessions, ranging from ${fmt(lo, step)} to ${fmt(hi, step)}`}
+          aria-label={`${symbol} daily close price, ${sessions} sessions, ranging from ${fmt(lo, step)} to ${fmt(hi, step)}`}
         >
-          {[0.2, 0.4, 0.6, 0.8].map((t) => (
-            <line
-              key={t}
-              x1={0}
-              x2={W}
-              y1={PAD_Y + t * (H - PAD_Y * 2)}
-              y2={PAD_Y + t * (H - PAD_Y * 2)}
-              stroke="var(--sg-line)"
-              strokeWidth={1}
-              vectorEffect="non-scaling-stroke"
-            />
-          ))}
-          {candles.map((c, i) => {
-            const x = i * slot + slot / 2;
-            const touched = c.low <= level && level <= c.high;
-            const up = c.close >= c.open;
-            const color = touched ? 'var(--sg-signal)' : up ? 'var(--sg-up)' : 'var(--sg-down)';
-            const top = y(Math.max(c.open, c.close));
-            const bottom = y(Math.min(c.open, c.close));
-            return (
-              <g key={c.time}>
-                <line
-                  x1={x}
-                  x2={x}
-                  y1={y(c.high)}
-                  y2={y(c.low)}
-                  stroke={color}
-                  strokeWidth={1}
-                  vectorEffect="non-scaling-stroke"
-                />
-                <rect
-                  x={x - body / 2}
-                  y={top}
-                  width={body}
-                  height={Math.max(1, bottom - top)}
-                  fill={color}
-                />
-              </g>
-            );
-          })}
+          <defs>
+            <linearGradient id={`${id}-fill`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--sg-ink)" stopOpacity={0.1} />
+              <stop offset="100%" stopColor="var(--sg-ink)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+
+          <path d={areaPath} fill={`url(#${id}-fill)`} stroke="none" />
+          <path
+            ref={lineRef}
+            d={linePath}
+            fill="none"
+            stroke="var(--sg-ink)"
+            strokeOpacity={0.7}
+            strokeWidth={2}
+            vectorEffect="non-scaling-stroke"
+          />
+
           <line
             x1={0}
-            x2={W}
+            x2={(n - 1) * stepX}
             y1={y(level)}
             y2={y(level)}
             stroke="var(--sg-signal)"
-            strokeWidth={1.5}
+            strokeWidth={1}
+            strokeDasharray="5 5"
             vectorEffect="non-scaling-stroke"
           />
+
+          <g ref={markersRef} style={ready ? undefined : { opacity: 0 }}>
+            {markers.map((m) => (
+              <circle
+                key={m.time}
+                cx={m.index * stepX}
+                cy={y(level)}
+                r={4}
+                fill="var(--sg-signal)"
+                opacity={0.65}
+              />
+            ))}
+          </g>
         </svg>
 
         <div
           aria-hidden
-          className="pointer-events-none absolute right-0 h-px w-[5.5rem] bg-signal"
+          className="pointer-events-none absolute right-0 h-px w-[5.5rem] bg-signal/50"
           style={{ top: `${levelPct}%` }}
         />
         <div
@@ -243,7 +268,7 @@ export function AlertLevelChart({
           aria-valuetext={`${levelLabel}, ${count} crossings`}
           onKeyDown={onKey}
           className={cn(
-            'num absolute right-0 flex h-11 -translate-y-1/2 items-center gap-1.5 px-1.5 text-sm font-semibold text-signal outline-offset-4 focus-visible:rounded-md focus-visible:ring-1 focus-visible:ring-signal/40',
+            'num absolute right-0 flex h-11 -translate-y-1/2 items-center gap-1 px-1.5 text-sm font-medium text-ink-2 outline-offset-4 focus-visible:rounded-md focus-visible:ring-1 focus-visible:ring-signal/40',
             dragging ? 'scale-[1.04]' : 'transition-[top] duration-200 ease-[var(--ease-out-ui)]'
           )}
           style={{ top: `${levelPct}%` }}
@@ -251,12 +276,14 @@ export function AlertLevelChart({
           <span id={`${id}-label`} className="sr-only">
             Alert level for {symbol}
           </span>
-          <svg viewBox="0 0 10 14" className="h-3 w-2.5" aria-hidden>
-            <path d="M5 0 9 4H1zM5 14 1 10h8z" fill="currentColor" />
-          </svg>
           {levelLabel}
         </div>
       </div>
+
+      <p className="num mt-6 text-center text-sm text-ink-3" aria-live="polite">
+        {count} {count === 1 ? 'time' : 'times'} price reached it · real daily sessions, priced from
+        Finnhub when this page loaded.
+      </p>
     </figure>
   );
 }

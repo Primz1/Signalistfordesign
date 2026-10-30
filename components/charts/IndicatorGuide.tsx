@@ -413,14 +413,12 @@ export function IndicatorGuide({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-2 border-b border-line pb-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-[15px] text-ink-3">What should I do?</p>
-          <p className="mt-1 max-w-3xl text-sm leading-5 text-ink-2">{overallText}</p>
-        </div>
-        <span className={cn('num shrink-0 text-sm font-semibold', STANCE_TEXT[overall])}>
+      <div className="flex flex-col gap-2 border-b border-line pb-5">
+        <p className="text-[15px] text-ink-3">What should I do?</p>
+        <span className={cn('num text-2xl font-semibold tracking-[-0.02em]', STANCE_TEXT[overall])}>
           {STANCE_LABEL[overall]}
         </span>
+        <p className="max-w-3xl text-sm leading-5 text-ink-2">{overallText}</p>
       </div>
 
       <IndicatorRows rows={rows} />
@@ -445,13 +443,13 @@ function IndicatorRows({ rows }: { rows: Row[] }) {
   return (
     <div className="flex flex-col divide-y divide-line">
       {rows.map((r) => (
-        <div key={r.label} className="flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:gap-4">
-          <div className="flex w-full items-baseline justify-between gap-3 sm:w-auto sm:justify-start sm:gap-3">
-            <span className="w-20 shrink-0 text-sm font-medium text-ink">{r.label}</span>
+        <div key={r.label} className="flex flex-col gap-1.5 py-3 sm:flex-row sm:items-baseline sm:gap-4">
+          <div className="flex items-baseline gap-3">
+            <span className="w-[120px] shrink-0 text-sm font-medium text-ink">{r.label}</span>
             <span className="num text-sm text-ink-2">{r.value}</span>
             <span className={cn('num text-sm font-medium', STANCE_TEXT[r.stance])}>{STANCE_LABEL[r.stance]}</span>
           </div>
-          <p className="text-[13px] leading-5 text-ink-3 sm:ml-auto sm:max-w-[46ch] sm:text-right">{r.meaning}</p>
+          <p className="max-w-[46ch] text-[13px] leading-5 text-ink-3">{r.meaning}</p>
         </div>
       ))}
     </div>

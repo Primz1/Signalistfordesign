@@ -99,12 +99,16 @@ export default function CandlestickChart({
       }
       return color;
     };
+    const uiFontFamily =
+      getComputedStyle(document.body).fontFamily ||
+      '"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif';
+
     const chart = createChart(containerRef.current, {
       height,
       layout: {
         background: { type: ColorType.Solid, color: PALETTE.canvas },
         textColor: PALETTE.ink3,
-        fontFamily: '"IBM Plex Mono", ui-monospace, monospace',
+        fontFamily: uiFontFamily,
         fontSize: 12,
         attributionLogo: false,
         panes: {
@@ -175,10 +179,10 @@ export default function CandlestickChart({
       lastValueVisible: false,
     });
     chart.priceScale('volume').applyOptions({
-      scaleMargins: { top: 0.82, bottom: 0 },
+      scaleMargins: { top: 0.85, bottom: 0 },
     });
 
-    const volOpacity = isDark ? 0.25 : 0.3;
+    const volOpacity = isDark ? 0.18 : 0.22;
     volumeSeries.setData(
       data.candles.map((c) => ({
         time: c.time as unknown as Time,
@@ -324,6 +328,10 @@ export default function CandlestickChart({
     }
 
     chart.timeScale().fitContent();
+    const fittedSpacing = chart.timeScale().options().barSpacing;
+    if (fittedSpacing > 8) {
+      chart.timeScale().applyOptions({ barSpacing: 8 });
+    }
 
     const lastCandle = data.candles[data.candles.length - 1];
     const y = lastCandle ? candleSeries.priceToCoordinate(lastCandle.close) : null;

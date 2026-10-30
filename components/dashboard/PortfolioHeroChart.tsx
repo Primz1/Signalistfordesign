@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
+import { monotonePath } from '@/lib/charts/monotone-path';
 import { formatPrice } from '@/lib/utils';
 
 export type ChartRangeKey = '1D' | '1W' | '1M' | '1Y';
@@ -8,25 +9,37 @@ export type ChartRangeKey = '1D' | '1W' | '1M' | '1Y';
 export type ChartPoint = { time: number; close: number };
 
 const RANGES: ChartRangeKey[] = ['1D', '1W', '1M', '1Y'];
+const RANGE_DAYS: Record<ChartRangeKey, number> = { '1D': 1, '1W': 7, '1M': 30, '1Y': 365 };
 
 const CHART_W = 1000;
 const CHART_H = 320;
 
-function buildPath(values: number[], min: number, range: number) {
-  const stepX = CHART_W / (values.length - 1 || 1);
-  return values
-    .map((v, i) => {
-      const x = i * stepX;
-      const y = CHART_H - ((v - min) / range) * CHART_H;
-      return `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`;
-    })
-    .join(' ');
+/** Approximate calendar label for a point, walking back from "now" by range span. */
+function labelForIndex(range: ChartRangeKey, index: number, total: number) {
+  const now = new Date();
+  const stepsFromEnd = total - 1 - index;
+  if (range === '1D') {
+    const stepMinutes = (6.5 * 60) / (total - 1 || 1);
+    const d = new Date(now);
+    d.setHours(16, 0, 0, 0);
+    d.setMinutes(d.getMinutes() - stepsFromEnd * stepMinutes);
+    return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
+  const stepDays = RANGE_DAYS[range] / (total - 1 || 1);
+  const d = new Date(now);
+  d.setDate(d.getDate() - Math.round(stepsFromEnd * stepDays));
+  return d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: range === '1Y' ? 'numeric' : undefined,
+  });
 }
 
 /**
  * Our own themed SVG line/area chart — replaces the TradingView mini
- * widget on the dashboard. Fill is capped at 6% opacity; stroke and fill
- * follow price direction (up/down) for the active range.
+ * widget on the dashboard. A monotone curve (never overshoots a high/low),
+ * a soft gradient fill, and stroke/fill that follow price direction for the
+ * active range.
  */
 export function PortfolioHeroChart({
   seriesByRange,
@@ -35,6 +48,7 @@ export function PortfolioHeroChart({
   seriesByRange: Record<ChartRangeKey, ChartPoint[]>;
   className?: string;
 }) {
+  const gradientId = useId();
   const [range, setRange] = useState<ChartRangeKey>('1M');
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
@@ -48,7 +62,10 @@ export function PortfolioHeroChart({
     const min = Math.min(...closes);
     const max = Math.max(...closes);
     const spread = max - min || 1;
-    const line = buildPath(closes, min, spread);
+    const stepX = CHART_W / (closes.length - 1 || 1);
+    const line = monotonePath(
+      closes.map((v, i) => ({ x: i * stepX, y: CHART_H - ((v - min) / spread) * CHART_H }))
+    );
     const area = `${line} L${CHART_W},${CHART_H} L0,${CHART_H} Z`;
     const changePct = ((closes[closes.length - 1] - closes[0]) / closes[0]) * 100;
     return { pathLine: line, pathArea: area, changePct, lastClose: closes[closes.length - 1] };
@@ -61,16 +78,18 @@ export function PortfolioHeroChart({
   const displayPrice = hoverPoint ? hoverPoint.close : lastClose;
 
   if (!points.length) {
-    return <div className="flex h-[320px] items-center justify-center text-sm text-ink-3">No chart data</div>;
+    return <div className="flex h-[200px] items-center justify-center text-sm text-ink-3 md:h-[320px]">No chart data</div>;
   }
 
   return (
     <div className={className}>
       <div className="flex items-baseline justify-between gap-4">
         <div className="num text-sm text-ink-3">
-          {hoverPoint ? (
+          {hoverPoint && hoverIdx != null ? (
             <>
-              {formatPrice(displayPrice)} <span style={{ color }}>({up ? '+' : ''}{changePct.toFixed(2)}%)</span>
+              <span className="text-ink-2">{labelForIndex(range, hoverIdx, points.length)}</span>
+              <span className="mx-1.5">·</span>
+              {formatPrice(displayPrice)}
             </>
           ) : (
             <span style={{ color }}>{up ? '+' : ''}{changePct.toFixed(2)}% this range</span>
@@ -94,8 +113,7 @@ export function PortfolioHeroChart({
       </div>
 
       <div
-        className="relative mt-2 touch-none select-none"
-        style={{ height: CHART_H }}
+        className="relative mt-2 h-[200px] touch-none select-none md:h-[320px]"
         onMouseMove={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           const frac = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
@@ -109,12 +127,12 @@ export function PortfolioHeroChart({
           className="h-full w-full"
         >
           <defs>
-            <linearGradient id="hero-chart-fill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={0.06} />
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.1} />
               <stop offset="100%" stopColor={color} stopOpacity={0} />
             </linearGradient>
           </defs>
-          <path d={pathArea} fill="url(#hero-chart-fill)" stroke="none" />
+          <path d={pathArea} fill={`url(#${gradientId})`} stroke="none" />
           <path d={pathLine} fill="none" stroke={color} strokeWidth={1.75} vectorEffect="non-scaling-stroke" />
           {hoverIdx != null && (
             <line

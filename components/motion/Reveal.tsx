@@ -20,7 +20,7 @@ type RevealProps = {
  * The one motion pattern this app uses: fade + 24px rise, 0.7s power3.out,
  * triggered once when scrolled into view. Honors prefers-reduced-motion.
  */
-export function Reveal({ children, className, stagger = 0.06, items = true }: RevealProps) {
+export function Reveal({ children, className, stagger = 0.08, items = true }: RevealProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   useGSAP(
@@ -38,7 +38,7 @@ export function Reveal({ children, className, stagger = 0.06, items = true }: Re
         {
           opacity: 1,
           y: 0,
-          duration: 0.7,
+          duration: 0.8,
           ease: 'power3.out',
           stagger,
           scrollTrigger: { trigger: el, start: 'top 88%', once: true },

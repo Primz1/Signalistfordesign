@@ -44,7 +44,7 @@ export default function AppHeader({
 
   return (
     <>
-    <header className="app-bar sticky top-0 z-30 border-b border-line pt-[env(safe-area-inset-top)]">
+    <header className="app-bar sticky top-0 z-30 border-b border-ink/6 pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-6 px-4 md:px-6">
         <BrandLogo />
 

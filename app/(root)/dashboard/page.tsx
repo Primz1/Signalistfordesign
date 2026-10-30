@@ -167,36 +167,35 @@ export default async function Home() {
               </p>
             </div>
           ) : (
-            <table className="w-full table-fixed text-sm">
-              <tbody>
-                {watchlist.slice(0, 8).map((row) => {
-                  const sym = row.symbol.toUpperCase();
-                  const q = quoteMap.get(sym);
-                  const ch = q?.change ?? 0;
-                  return (
-                    <tr key={sym} className="border-b border-line last:border-0">
-                      <td className="w-[48%] py-3.5 sm:w-auto">
-                        <Link href={`/stocks/${sym}`} className="flex min-w-0 items-baseline gap-2">
-                          <span className="num shrink-0 font-semibold text-ink">{sym}</span>
-                          <span
-                            className="hidden min-w-0 truncate text-ink-3 min-[420px]:inline"
-                            title={row.company}
-                          >
-                            {row.company}
-                          </span>
-                        </Link>
-                      </td>
-                      <td className="num w-[26%] py-3.5 text-right text-ink sm:w-auto">
+            <div className="flex flex-col text-sm">
+              {watchlist.slice(0, 8).map((row) => {
+                const sym = row.symbol.toUpperCase();
+                const q = quoteMap.get(sym);
+                const ch = q?.change ?? 0;
+                return (
+                  <Link
+                    href={`/stocks/${sym}`}
+                    key={sym}
+                    className="flex items-center justify-between gap-4 border-b border-line py-3.5 last:border-0"
+                  >
+                    <span className="flex min-w-0 items-baseline gap-2">
+                      <span className="num shrink-0 font-semibold text-ink">{sym}</span>
+                      <span className="hidden min-w-0 truncate text-ink-3 min-[420px]:inline" title={row.company}>
+                        {row.company}
+                      </span>
+                    </span>
+                    <span className="flex flex-none items-baseline gap-4">
+                      <span className="num w-20 text-right text-ink">
                         {q?.price != null ? formatPrice(q.price) : '—'}
-                      </td>
-                      <td className={`num w-[26%] py-3.5 pl-4 text-right sm:w-auto ${ch >= 0 ? 'text-up' : 'text-down'}`}>
+                      </span>
+                      <span className={`num w-16 text-right ${ch >= 0 ? 'text-up' : 'text-down'}`}>
                         {q?.change != null ? signedPct(ch) : <span className="text-ink-3">—</span>}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      </span>
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
           )}
         </div>
 
@@ -227,7 +226,7 @@ export default async function Home() {
                     <Link href={`/research?symbol=${r.symbol}`} className="block">
                       <div className="flex items-baseline justify-between gap-3">
                         <span className="num text-sm font-semibold text-ink">{r.symbol}</span>
-                        <span className="num text-xs text-ink-3">{conf}% confidence</span>
+                        <span className="num text-[13px] text-ink-3">{conf}% confidence</span>
                       </div>
                       <p className="mt-1.5 line-clamp-2 text-sm leading-normal text-ink-2">
                         {r.summary || 'Research report'}

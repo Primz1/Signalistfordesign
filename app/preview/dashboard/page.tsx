@@ -96,10 +96,10 @@ export default function PreviewDashboard() {
           <div className="grid grid-cols-3 gap-4 sm:flex sm:flex-wrap sm:gap-x-12 sm:gap-y-5">
             <div className="min-w-0">
               <p className="meta truncate">Day P&amp;L</p>
-              <p className="num mt-1 truncate text-[17px] font-semibold text-up sm:text-xl">
-                {formatSignedPrice(dayPl)}
+              <p className="num mt-1 truncate text-[17px] font-semibold text-ink sm:text-xl">
+                {formatSignedPrice(dayPl)}{' '}
+                <span className="text-sm font-medium text-up/80">+{dayPlPercent.toFixed(2)}%</span>
               </p>
-              <p className="num truncate text-xs text-up">+{dayPlPercent.toFixed(2)}%</p>
             </div>
             <div className="min-w-0">
               <p className="meta truncate">Cash</p>
@@ -121,32 +121,31 @@ export default function PreviewDashboard() {
               Open watchlist
             </Link>
           </div>
-          <table className="w-full table-fixed text-sm">
-            <tbody>
-              {WATCHLIST.map((row) => (
-                <tr key={row.symbol} className="border-b border-line last:border-0">
-                  <td className="w-[48%] py-3.5 sm:w-auto">
-                    <Link href="/preview/stock" className="flex min-w-0 items-baseline gap-2">
-                      <span className="num shrink-0 font-semibold text-ink">{row.symbol}</span>
-                      <span
-                        className="hidden min-w-0 truncate text-ink-3 min-[420px]:inline"
-                        title={row.company}
-                      >
-                        {row.company}
-                      </span>
-                    </Link>
-                  </td>
-                  <td className="num w-[26%] py-3.5 text-right text-ink sm:w-auto">{formatPrice(row.price)}</td>
-                  <td
-                    className={`num w-[26%] py-3.5 pl-4 text-right sm:w-auto ${row.changePct >= 0 ? 'text-up' : 'text-down'}`}
+          <div className="flex flex-col text-sm">
+            {WATCHLIST.map((row) => (
+              <Link
+                href="/preview/stock"
+                key={row.symbol}
+                className="flex items-center justify-between gap-4 border-b border-line py-3.5 last:border-0"
+              >
+                <span className="flex min-w-0 items-baseline gap-2">
+                  <span className="num shrink-0 font-semibold text-ink">{row.symbol}</span>
+                  <span className="hidden min-w-0 truncate text-ink-3 min-[420px]:inline" title={row.company}>
+                    {row.company}
+                  </span>
+                </span>
+                <span className="flex flex-none items-baseline gap-4">
+                  <span className="num w-20 text-right text-ink">{formatPrice(row.price)}</span>
+                  <span
+                    className={`num w-16 text-right ${row.changePct >= 0 ? 'text-up' : 'text-down'}`}
                   >
                     {row.changePct >= 0 ? '+' : ''}
                     {row.changePct.toFixed(2)}%
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </span>
+                </span>
+              </Link>
+            ))}
+          </div>
         </div>
 
         <div className="min-w-0">
@@ -161,7 +160,7 @@ export default function PreviewDashboard() {
               <li key={r.symbol} className="border-b border-line py-3.5 last:border-0">
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="num text-sm font-semibold text-ink">{r.symbol}</span>
-                  <span className="num text-xs text-ink-3">{r.confidence}% confidence</span>
+                  <span className="num text-[13px] text-ink-3">{r.confidence}% confidence</span>
                 </div>
                 <p className="mt-1.5 line-clamp-2 text-sm leading-normal text-ink-2">{r.summary}</p>
               </li>

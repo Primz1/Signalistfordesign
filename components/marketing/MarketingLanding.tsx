@@ -5,7 +5,7 @@ import { ArrowRight } from 'lucide-react';
 import BrandLogo from '@/components/layout/BrandLogo';
 import ThemeToggle from '@/components/layout/ThemeToggle';
 import { AlertLevelChart } from '@/components/marketing/AlertLevelChart';
-import { Reveal } from '@/components/motion';
+import { Reveal, ScrollCountUp } from '@/components/motion';
 import { cn } from '@/lib/utils';
 import type { Candle } from '@/lib/market/ohlcv';
 import type { MarketingLiveData, MarketingQuote } from '@/lib/marketing/live-data';
@@ -65,7 +65,7 @@ function Sparkline({ points, up, className }: { points: number[]; up: boolean; c
 
 function Header() {
   return (
-    <header className="app-bar sticky top-0 z-30 border-b border-line">
+    <header className="app-bar sticky top-0 z-30 border-b border-ink/6">
       <div className="mx-auto flex h-16 w-full max-w-[1100px] items-center gap-6 px-4 md:px-8">
         <BrandLogo href="/" />
         <nav aria-label="Sections" className="hidden items-center gap-1 md:flex">
@@ -101,12 +101,12 @@ function Hero({ data }: { data: MarketingLiveData }) {
   return (
     <section className="mx-auto w-full max-w-[1100px] px-4 pt-20 pb-6 md:px-8 md:pt-28">
       <div className="flex flex-col items-center text-center">
-        <h1 className="font-display text-[clamp(2.75rem,12vw,5.5rem)] leading-[1.02] font-semibold tracking-[-0.035em] text-ink">
+        <h1 className="font-display text-[clamp(3.5rem,8vw,7.5rem)] leading-[0.95] font-semibold tracking-[-0.03em] text-ink">
           Your levels.
           <br />
           Watched for you.
         </h1>
-        <p className="mt-6 max-w-[42ch] text-[20px] leading-relaxed text-ink-2">
+        <p className="mt-6 max-w-[34ch] text-[19px] leading-relaxed text-ink-2">
           Set a price, write a thesis, and let the market come to you. Real feeds, real alerts, no
           noise.
         </p>
@@ -121,12 +121,7 @@ function Hero({ data }: { data: MarketingLiveData }) {
       </div>
 
       <Reveal className="mt-12" items={false}>
-        <div>
-          <AlertLevelChart symbol={data.hero.symbol} candles={candles} />
-          <p className="mt-6 text-center text-sm text-ink-3">
-            Real daily sessions, priced from Finnhub when this page loaded.
-          </p>
-        </div>
+        <AlertLevelChart symbol={data.hero.symbol} candles={candles} />
       </Reveal>
     </section>
   );
@@ -146,17 +141,17 @@ function FeatureRow({
   reverse?: boolean;
 }) {
   return (
-    <div id={id} className="scroll-mt-24">
-      <Reveal className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
+    <section id={id} className="mx-auto w-full max-w-[1100px] scroll-mt-24 px-4 py-20 md:px-8 md:py-40">
+      <Reveal className="grid items-center gap-12 md:grid-cols-2 md:gap-20">
         <div className={reverse ? 'md:order-2' : undefined}>
-          <h2 className="font-display max-w-[20ch] text-[40px] leading-[1.1] font-semibold tracking-[-0.025em] text-ink">
+          <h2 className="font-display max-w-[20ch] text-[clamp(2.25rem,4vw,3.5rem)] leading-[1.1] font-semibold tracking-[-0.025em] text-ink">
             {title}
           </h2>
-          <p className="mt-4 max-w-[46ch] text-[17px] leading-relaxed text-ink-2">{paragraph}</p>
+          <p className="mt-5 max-w-[46ch] text-[18px] leading-relaxed text-ink-2">{paragraph}</p>
         </div>
         <div className={reverse ? 'md:order-1' : undefined}>{fragment}</div>
       </Reveal>
-    </div>
+    </section>
   );
 }
 
@@ -170,12 +165,12 @@ function AlertsFragment({ data }: { data: MarketingLiveData }) {
   return (
     <div className="flex flex-col divide-y divide-line">
       {rows.map((r) => (
-        <div key={r.symbol} className="flex items-center justify-between gap-4 py-4">
+        <div key={r.symbol} className="flex items-center justify-between gap-6 py-6">
           <div>
-            <div className="num text-base font-semibold text-ink">{r.symbol}</div>
-            <div className="num text-sm text-ink-3">alert at ${fmtPrice(r.level)}</div>
+            <div className="num text-xl font-semibold text-ink">{r.symbol}</div>
+            <div className="num mt-1 text-base text-ink-3">alert at ${fmtPrice(r.level)}</div>
           </div>
-          <div className={cn('num text-sm font-medium', r.distance >= 0 ? 'text-up' : 'text-down')}>
+          <div className={cn('num text-base font-medium', r.distance >= 0 ? 'text-up' : 'text-down')}>
             {Math.abs(r.distance).toFixed(1)}% {r.distance >= 0 ? 'above' : 'below'}
           </div>
         </div>
@@ -188,11 +183,12 @@ function ResearchFragment({ data }: { data: MarketingLiveData }) {
   const r = data.research;
   return (
     <div>
-      <div className="num text-[96px] leading-none font-medium tracking-[-0.03em] text-ink">
-        {r?.confidence ?? 72}
-      </div>
-      <div className="mt-2 text-sm text-ink-3">AI confidence · {r?.symbol ?? data.hero.symbol}</div>
-      <p className="mt-6 max-w-[48ch] text-base leading-relaxed text-ink-2">
+      <ScrollCountUp
+        value={r?.confidence ?? 72}
+        className="num block text-[clamp(6rem,14vw,10rem)] leading-none font-medium tracking-[-0.03em] text-ink"
+      />
+      <div className="mt-3 text-base text-ink-3">AI confidence · {r?.symbol ?? data.hero.symbol}</div>
+      <p className="mt-6 max-w-[48ch] text-lg leading-relaxed text-ink-2">
         &ldquo;{r?.summary ?? 'Trend above SMA50 with RSI cooling from overbought.'}&rdquo;
       </p>
     </div>
@@ -203,12 +199,12 @@ function WatchlistFragment({ data }: { data: MarketingLiveData }) {
   return (
     <div className="flex flex-col divide-y divide-line">
       {data.watchlist.slice(0, 5).map((q: MarketingQuote) => (
-        <div key={q.symbol} className="flex items-center gap-4 py-3">
-          <span className="num w-14 flex-none text-sm font-semibold text-ink">{q.symbol}</span>
-          <Sparkline points={q.points} up={q.up} />
-          <span className="num ml-auto text-sm text-ink">{q.price}</span>
+        <div key={q.symbol} className="flex items-center gap-6 py-4">
+          <span className="num w-20 flex-none text-base font-semibold text-ink">{q.symbol}</span>
+          <Sparkline points={q.points} up={q.up} className="h-8 w-[90px]" />
+          <span className="num ml-auto text-base text-ink">{q.price}</span>
           <span
-            className={cn('num w-16 flex-none text-right text-xs font-semibold', q.up ? 'text-up' : 'text-down')}
+            className={cn('num w-20 flex-none text-right text-base font-semibold', q.up ? 'text-up' : 'text-down')}
           >
             {pct(q.changePct)}
           </span>
@@ -220,19 +216,17 @@ function WatchlistFragment({ data }: { data: MarketingLiveData }) {
 
 function Closing() {
   return (
-    <section className="bg-surface">
-      <div className="mx-auto w-full max-w-[1100px] px-4 py-28 text-center md:px-8">
-        <h2 className="font-display mx-auto max-w-[20ch] text-[56px] leading-[1.05] font-semibold tracking-[-0.03em] text-ink">
-          Set your first level.
-        </h2>
-        <p className="mx-auto mt-4 max-w-[48ch] text-lg text-ink-2">
-          Paper money only. No brokerage connection required.
-        </p>
-        <div className="mt-8 flex justify-center">
-          <Link href="/sign-up" className="yellow-btn px-7 text-base">
-            Create free account <ArrowRight className="size-4" />
-          </Link>
-        </div>
+    <section className="mx-auto w-full max-w-[1100px] px-4 py-32 text-center md:px-8 md:py-40">
+      <h2 className="font-display mx-auto max-w-[20ch] text-[56px] leading-[1.05] font-semibold tracking-[-0.03em] text-ink">
+        Set your first level.
+      </h2>
+      <p className="mx-auto mt-4 max-w-[48ch] text-lg text-ink-2">
+        Paper money only. No brokerage connection required.
+      </p>
+      <div className="mt-8 flex justify-center">
+        <Link href="/sign-up" className="yellow-btn px-7 text-base">
+          Create free account <ArrowRight className="size-4" />
+        </Link>
       </div>
     </section>
   );
@@ -294,29 +288,25 @@ export default function MarketingLanding({ data }: { data: MarketingLiveData }) 
       <Header />
       <main>
         <Hero data={data} />
-        <section className="mx-auto w-full max-w-[1100px] px-4 py-20 md:px-8">
-          <div className="flex flex-col gap-40">
-            <FeatureRow
-              id="alerts"
-              title="Set a level, we watch it."
-              paragraph="Draw a line at the price you care about. We watch every tick against it and fire the moment it crosses, so you don't have to."
-              fragment={<AlertsFragment data={data} />}
-            />
-            <FeatureRow
-              id="research"
-              title="Research, not noise."
-              paragraph="Every symbol gets a short, generated thesis with a confidence score behind it, built from trend, momentum and volume, not a headline scroll."
-              fragment={<ResearchFragment data={data} />}
-              reverse
-            />
-            <FeatureRow
-              id="watchlist"
-              title="One list, every name that matters."
-              paragraph="Prices, daily moves and AI scores for your whole list in one place, updated live from the same feed your workspace runs on."
-              fragment={<WatchlistFragment data={data} />}
-            />
-          </div>
-        </section>
+        <FeatureRow
+          id="alerts"
+          title="Set a level, we watch it."
+          paragraph="Draw a line at the price you care about. We watch every tick against it and fire the moment it crosses, so you don't have to."
+          fragment={<AlertsFragment data={data} />}
+        />
+        <FeatureRow
+          id="research"
+          title="Research, not noise."
+          paragraph="Every symbol gets a short, generated thesis with a confidence score behind it, built from trend, momentum and volume, not a headline scroll."
+          fragment={<ResearchFragment data={data} />}
+          reverse
+        />
+        <FeatureRow
+          id="watchlist"
+          title="One list, every name that matters."
+          paragraph="Prices, daily moves and AI scores for your whole list in one place, updated live from the same feed your workspace runs on."
+          fragment={<WatchlistFragment data={data} />}
+        />
       </main>
       <Closing />
       <Footer />
