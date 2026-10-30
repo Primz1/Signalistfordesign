@@ -658,9 +658,9 @@ export default function PortfolioClient({
 
       {/* Main grid */}
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
-        <div className="min-w-0 space-y-5">
+        <div className="min-w-0 space-y-8">
           {/* Allocation */}
-          <div className="rounded-lg border border-line bg-surface p-5 md:p-6">
+          <div>
             <h2 className="section-title mb-5">
               Allocation
             </h2>
@@ -681,19 +681,15 @@ export default function PortfolioClient({
           </div>
 
           {/* Holdings */}
-          <div className="overflow-hidden rounded-lg border border-line bg-surface">
-            <div className="border-b border-line px-4 py-3.5">
-              <h2 className="section-title">
-                Holdings
-              </h2>
-            </div>
+          <div>
+            <h2 className="section-title mb-4">
+              Holdings
+            </h2>
             {portfolio.holdings.length === 0 ? (
-              <div className="p-4">
-                <EmptyState
-                  title="No open positions"
-                  description="Use the trade ticket to buy your first paper shares."
-                />
-              </div>
+              <EmptyState
+                title="No open positions"
+                description="Use the trade ticket to buy your first paper shares."
+              />
             ) : (
               <Accordion
                 type="single"
@@ -858,8 +854,8 @@ export default function PortfolioClient({
           </div>
 
           {/* Recent trades */}
-          <div className="overflow-hidden rounded-lg border border-line bg-surface">
-            <div className="flex items-center justify-between border-b border-line px-4 py-3.5">
+          <div>
+            <div className="mb-4 flex items-center justify-between">
               <h2 className="section-title">
                 Recent trades
               </h2>
@@ -871,19 +867,17 @@ export default function PortfolioClient({
               </Link>
             </div>
             {recent.length === 0 ? (
-              <div className="p-4">
-                <EmptyState
-                  title="No trades yet"
-                  description="Filled paper trades will show up here."
-                  className="py-6"
-                />
-              </div>
+              <EmptyState
+                title="No trades yet"
+                description="Filled paper trades will show up here."
+                className="py-6"
+              />
             ) : (
               <ul>
                 {recent.slice(0, 5).map((t) => (
                   <li
                     key={t.id}
-                    className="grid grid-cols-[60px_1fr_1fr_1fr_1fr] items-center gap-2 border-b border-surface-2 px-4 py-2.5 last:border-b-0"
+                    className="grid grid-cols-[60px_1fr_1fr_1fr_1fr] items-center gap-2 border-b border-line py-2.5 last:border-b-0"
                   >
                     <span
                       className={cn(
@@ -911,9 +905,9 @@ export default function PortfolioClient({
         </div>
 
         {/* Right rail */}
-        <div className="sticky top-6 space-y-4 self-start">
+        <div className="sticky top-6 flex flex-col divide-y divide-line self-start">
           {/* Trade ticket — screenshot text + UI */}
-          <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4">
+          <div className="flex flex-col gap-3 pb-6">
             <h2 className="section-title">
               Trade ticket
             </h2>
@@ -978,7 +972,7 @@ export default function PortfolioClient({
             </div>
 
             {estPrice > 0 && (
-              <div className="rounded-lg bg-canvas px-3 py-2.5 text-[12px] leading-relaxed text-ink-2">
+              <div className="text-[12px] leading-relaxed text-ink-2">
                 {side === 'buy' ? 'Buying' : 'Selling'}{' '}
                 <span className="mono font-medium text-ink">{quantity}</span>{' '}
                 {symbol.toUpperCase()} @{' '}
@@ -994,7 +988,7 @@ export default function PortfolioClient({
             )}
 
             {(guardHit || tradeTooLarge) && (
-              <div className="rounded-lg border border-signal/45 bg-signal/8 p-3">
+              <div className="border-l-2 border-signal pl-3">
                 <div className="flex gap-2">
                   <AlertTriangle className="mt-0.5 size-4 shrink-0 text-signal" />
                   <div className="min-w-0 text-[12px] leading-relaxed text-ink">
@@ -1071,7 +1065,7 @@ export default function PortfolioClient({
           </div>
 
           {/* Risk overview */}
-          <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4">
+          <div className="flex flex-col gap-3 py-6">
             <h2 className="section-title">
               Risk overview
             </h2>
@@ -1119,7 +1113,7 @@ export default function PortfolioClient({
           </div>
 
           {/* Capital guard */}
-          <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4">
+          <div className="flex flex-col gap-3 pt-6">
             <h2 className="section-title inline-flex items-center gap-2">
               <Shield className="size-3.5 text-signal" />
               Capital guard
@@ -1166,7 +1160,7 @@ export default function PortfolioClient({
       </div>
 
       {/* AI Portfolio Review */}
-      <div className="rounded-lg border border-line border-l border-l-signal bg-surface p-5">
+      <div className="border-t border-line pt-6">
         <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2">
           <h2 className="section-title inline-flex items-center gap-2">
             <Sparkles className="size-4 text-signal" />
@@ -1327,7 +1321,7 @@ export default function PortfolioClient({
 
       {/* This week */}
       {showWeek && (
-        <div className="mb-10 rounded-lg border border-line border-l border-l-signal/50 bg-surface p-[18px]">
+        <div className="mb-10 border-t border-line pt-6">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="section-title">
               This week

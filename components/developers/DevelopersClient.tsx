@@ -83,7 +83,7 @@ export default function DevelopersClient() {
       </div>
 
       {newKey && (
-        <div className="rounded-lg border border-signal/40 bg-signal/10 p-4 text-[14px] text-ink">
+        <div className="border-l-2 border-signal pl-4 text-[14px] text-ink">
           <p className="font-medium">Copy this key now. It won’t be shown again.</p>
           <code className="mono mt-2 block break-all text-signal">{newKey}</code>
         </div>

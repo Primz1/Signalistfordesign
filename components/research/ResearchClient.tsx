@@ -439,7 +439,7 @@ export default function ResearchClient({ initialSymbols, initialSymbol }: Props)
     return (
       <PageEnter className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 px-1 md:px-0">
         <h1 className="page-title">Research</h1>
-        <div className="rounded-lg border border-line bg-surface px-5 py-8">
+        <div className="border-t border-line pt-6">
           <h2 className="text-[17px] font-semibold text-ink">Add a symbol to research</h2>
           <p className="mt-2 max-w-md text-sm leading-6 text-ink-2">
             Research runs on symbols you follow. Add names on Watchlist, then come back to
@@ -552,7 +552,7 @@ export default function ResearchClient({ initialSymbols, initialSymbol }: Props)
       </div>
 
       {/* Verdict strip */}
-      <div className="rounded-lg border border-line bg-surface px-4 py-3.5 md:px-5">
+      <div className="border-y border-line py-4">
         <div className="flex flex-wrap items-center gap-3">
           <span
             className={cn(
@@ -573,17 +573,15 @@ export default function ResearchClient({ initialSymbols, initialSymbol }: Props)
       </div>
 
       <div>
-        <h2 className="section-title mb-3">Factor pack</h2>
+        <h2 className="section-title mb-4">Factor pack</h2>
         {isPending && !report ? (
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line md:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-3 lg:grid-cols-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-surface p-4">
-                <Skeleton className="h-[96px] w-full" />
-              </div>
+              <Skeleton key={i} className="h-[96px] w-full" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line md:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-3 lg:grid-cols-6">
             {(factors.length
               ? factors
               : ['Trend', 'Momentum', 'Volatility', 'Quality', 'Value', 'Growth'].map((k) => ({
@@ -596,10 +594,7 @@ export default function ResearchClient({ initialSymbols, initialSymbol }: Props)
               const tone = factorTone(f.score);
               const empty = !factors.length;
               return (
-                <div
-                  key={f.key}
-                  className="bg-surface p-4"
-                >
+                <div key={f.key} className="min-w-0">
                   <div className="mb-2 flex items-start justify-between gap-2">
                     <span className="text-[13px] text-ink-2">{f.key}</span>
                     <span className="mono text-[13px] text-ink">
@@ -639,10 +634,7 @@ export default function ResearchClient({ initialSymbols, initialSymbol }: Props)
         )}
       </div>
 
-      <div
-        className="rounded-lg border border-line bg-surface p-5 md:p-6"
-        style={{ boxShadow: '0 0 40px -24px rgba(249,115,22,0.35)' }}
-      >
+      <div className="border-t border-line pt-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-1.5">
             <Sparkles className="size-4 text-signal" strokeWidth={1.5} />
@@ -686,7 +678,7 @@ export default function ResearchClient({ initialSymbols, initialSymbol }: Props)
             </div>
           </div>
         ) : error && !report ? (
-          <div className="rounded-lg border border-down/30 bg-down/6 px-4 py-5">
+          <div className="border-l-2 border-down pl-4">
             <p className="text-sm font-medium text-down">Couldn’t load research</p>
             <p className="mt-1.5 text-[13px] leading-5 text-ink-2">{error}</p>
             <button

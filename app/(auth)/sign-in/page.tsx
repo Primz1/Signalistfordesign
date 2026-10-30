@@ -52,7 +52,7 @@ const SignIn = () => {
   return (
     <>
       <h1 className="form-title animate-el" style={{ animationDelay: '100ms' }}>
-        Welcome back
+        Sign in to Signalist
       </h1>
       <p
         className="mb-8 animate-el text-base leading-normal text-ink-2"
